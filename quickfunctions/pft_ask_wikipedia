@@ -1,0 +1,82 @@
+pft_wiki_lp = function(term = "Influenza", language_of_interest = "de", backlinked = 1 ,manual.pages=c("Halsschmerzen","Hausmittel")){
+  wiki.query<-paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=links&pllimit=500&format=json&titles=",term,  sep="")
+  linked_pages<-fromJSON(getURL(wiki.query)) # this query asks for links on the respective page
+  links = NULL
+  for(i in 1:length(linked_pages$query$pages[[1]]$links$title)){
+    # links[i]<-linked_pages$query$pages[[1]]$links[[i]]$title
+    links[i]<-linked_pages$query$pages[[1]]$links$title[i]
+    
+  }
+  # If the number of linked pages is larger than 500 (on the English Influenza page there are 660 links), we need to send multiple queries using the code below
+  if( !is.null(linked_pages$continue[1])){
+    temp.links<-NULL
+    while(!is.null(linked_pages$continue[1])){ # Only 500 linked pages can be retrieved per query, if >500, more than 1 query is neccessary
+      linked_pages<-paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=links&pllimit=500&format=json&titles=",term,"&plcontinue=",linked_pages$continue[1],  sep="")
+      linked_pages<-fromJSON(getURL(linked_pages))
+      for(l in 1:length(linked_pages$query$pages[[1]]$links)){
+        #  temp.links[l]<-linked_pages$query$pages[[1]]$links[[l]]$title
+        temp.links[l]<-linked_pages$query$pages[[1]]$links$title[l]
+        
+      }
+      links = c(links,temp.links)
+    }
+    str(links)}
+  
+  # 3. Backlined pages (Pages which link to influenza)
+  if(backlinked ==1 ){
+    backlinked.pages<-paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&list=backlinks&bllimit=500&format=json&bltitle=",term,  sep="")
+    backlinked_pages<-fromJSON(getURL(backlinked.pages)) # this query asks for links on the respective page
+    backlinks = NULL
+    for(i in 1:length(backlinked_pages$query$backlinks$title)){
+      backlinks[i]<-backlinked_pages$query$backlinks$title[i]
+    }} else(backlinks = NULL)
+  # Limited to 500 results (???)
+  
+  # 4. Specify your own pages manually if you like to, but make sure they are actual Wikipedia pages 
+  manual.pages = manual.pages 
+  
+  # 5. combine all terms
+  wiki.pages = c(term,links,backlinks,manual.pages)
+  wiki.pages = gsub(" ","_",wiki.pages)
+  wiki.pages = unique(wiki.pages) # To remove duplicated terms
+  return(wiki.pages)
+}
+pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31")){
+  
+  from.wikishark = format(from,format="%m/%d/%Y")
+  to.wikishark = format(as.Date("2015-09-30"),format="%m/%d/%Y")
+  from.wikiapi = as.Date("2015-10-01") 
+  to.wikiapi = to
+  
+  wiki = data.frame(date=seq(from=as.Date(from),to=as.Date(to),by=1))
+  for(p in 1:length(pages)){
+    tryCatch({
+      cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")
+      temp.dat<-article_pageviews(article = pages[p],
+                                  project = paste(language_of_interest,".wikipedia",sep=""),
+                                  start = "2015100100",end = pageview_timestamps(to))
+      temp.wiki.pageview = data.frame(as.Date(temp.dat$date),scale(temp.dat$views)) # Note: why scale? Because pre 2016/post2016 has different pageview definitions?!
+      names(temp.wiki.pageview) = c("date",pages[p])
+      
+      url.lookup = paste("www.wikishark.com/title/",language_of_interest,"/",pages[p],sep="")
+      raw.url.lookup = getURLContent(url.lookup)
+      start.at =regexpr("translate/id/",raw.url.lookup)[1]
+      stop.at = regexpr("values=",raw.url.lookup)[1]
+      page.id =  substr(raw.url.lookup,start.at+nchar("translate/id/"),stop.at-2)
+     # function below not working: wiki shark doesnt use Wikipedia pageid- they make up their own 'values'  
+     # page.id=fromJSON(getURL(paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=info&titles=",pages[p],"&format=json",sep="")))$query$pages[[1]]$pageid
+      ws.url = paste("http://www.wikishark.com/json_print.php?values=",page.id,"&datefrom=",from.wikishark,"&dateto=",to.wikishark,"&view=2&normalized=0&scale=0&peak=0&log=0&zerofix=0&sumall=0&format=csv", sep="")
+      ws.csv = read.csv(ws.url)[,1:2]
+      temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),scale(as.numeric(ws.csv[,2])))
+      names(temp.ws.pageview) = c("date",pages[p])
+      temp.wiki.pageview = rbind(temp.wiki.pageview,temp.ws.pageview)
+      
+      wiki = merge(wiki,temp.wiki.pageview,by="date",all=T)
+    },
+    error=function(e) {cat("Uups...Something went wrong with",pages[p],"\n")})
+  }
+  wiki = data.frame(date=unique(ISOweek(wiki$date)),lapply(wiki[,-1], function(x){aggregate(x, list(ISOweek(wiki$date)), FUN=sum,simplify=T)[,2]}))
+  names(wiki)[-1] = paste("wiki.",names(wiki)[-1],sep="")
+  
+  return(wiki)
+}
