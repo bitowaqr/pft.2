@@ -41,7 +41,7 @@ pft_wiki_lp = function(term = "Influenza", language_of_interest = "de", backlink
   wiki.pages = unique(wiki.pages) # To remove duplicated terms
   return(wiki.pages)
 }
-pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31")){
+pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31"),status=1){
   require(ISOweek)
   require(pageviews)
   require(RCurl)
@@ -54,7 +54,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
   wiki = data.frame(date=seq(from=as.Date(from),to=as.Date(to),by=1))
   for(p in 1:length(pages)){
     tryCatch({
-      cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")
+      if(status==1){cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")}
       temp.dat<-article_pageviews(article = pages[p],
                                   project = paste(language_of_interest,".wikipedia",sep=""),
                                   start = "2015100100",end = pageview_timestamps(to))
