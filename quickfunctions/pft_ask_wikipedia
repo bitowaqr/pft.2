@@ -42,7 +42,9 @@ pft_wiki_lp = function(term = "Influenza", language_of_interest = "de", backlink
   return(wiki.pages)
 }
 pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31")){
-  
+  require(ISOweek)
+  require(RCurl)
+  require(JSONlite)
   from.wikishark = format(from,format="%m/%d/%Y")
   to.wikishark = format(as.Date("2015-09-30"),format="%m/%d/%Y")
   from.wikiapi = as.Date("2015-10-01") 
