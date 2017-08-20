@@ -76,7 +76,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
       
       wiki = merge(wiki,temp.wiki.pageview,by="date",all=T)
     },
-    error=function(e) {cat("Uups...Something went wrong with",pages[p],"\n")})
+    error=function(e) {if(status==1){cat("Uups...Something went wrong with",pages[p],"\n")}})
   }
   wiki = data.frame(date=unique(ISOweek(wiki$date)),lapply(wiki[,-1], function(x){aggregate(x, list(ISOweek(wiki$date)), FUN=sum,simplify=T)[,2]}))
   names(wiki)[-1] = paste("wiki.",names(wiki)[-1],sep="")
