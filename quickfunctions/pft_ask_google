@@ -12,7 +12,24 @@ Rescale.gtrends = function(df.t1,df.t2){
   hits = as.numeric(c(df.t1$hits,df.t2$hits))
   return(hits)}
 
-pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1) {   
+pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.") {
+
+# Splitting the time span into two spans, each < 5 years
+  time.span1 =  paste(as.Date(from), as.Date(from)+(5*365-1))
+  time.span1.dates = ISOweek(seq(from=as.Date(from),to=as.Date(from)+(5*365-1), by=7))
+  time.span2 = paste(as.Date(to)-(5*365-1), as.Date(to))
+  time.span2.dates = ISOweek(seq(from=as.Date(as.Date(to)-(5*365-1)),to=as.Date(to), by=7))
+  time.span.dates.combined = unique(c(time.span1.dates,time.span2.dates))
+
+
+google.input.data = as.data.frame(
+      matrix(nrow = length(time.span.dates.combined),
+             ncol = 1+length(keyword)))
+    
+    names(google.input.data) = c("date",paste(prefix,keyword,sep=""))
+    google.input.data$date =  time.span.dates.combined
+
+
   for(p in 1:length(keyword)){
     if(status==1){cat("asking Google for statistics for",keyword[p]," - ",round(p/length(keyword),3)*100,"%" ,"\n")}
     tryCatch({ 
@@ -37,4 +54,5 @@ pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="
     })
     
   }
+  return(google.input.data)
 }
