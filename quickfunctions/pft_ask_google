@@ -50,9 +50,7 @@ pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="
     })
     
   }
-    
-    names(google.input.data) = c("date",paste(prefix,gsub(" ","\\.",keyword),sep=""))
-    return(google.input.data)
+  
+  names(google.input.data) = c("date",paste(prefix,gsub(" ","\\.",keyword),sep=""))
+  return(google.input.data)
 }
-
-
