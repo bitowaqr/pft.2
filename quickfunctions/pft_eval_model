@@ -1,0 +1,45 @@
+pft_eval_model = function(model){ 
+  tryCatch({ 
+    cv.plot = plot(model)
+    error=function(e) {}})
+  
+  if(!is.null(model)){
+    tryCatch({
+      pred.train.temp = predict(model,newdata= df.train)
+      rmse.train = round(sqrt(mean( (pred.train.temp - y.train)^2 )),6)
+      pred.test.temp =  predict(model,newdata= df.test)
+      rmse.test = round(sqrt(mean( (pred.test.temp - y.test)^2)),6)
+      
+      train.temp.df  = data.frame(y=y.train,date=date.train,preds=pred.train.temp)
+      test.temp.df = data.frame(y=y.test,date=date.test,preds=pred.test.temp)
+      
+      pred.plot = ggplot(data=train.temp.df) +
+        geom_line(data=test.temp.df, aes(x=date.test,y=y.test),col="gray") +
+        geom_line(data=train.temp.df,aes(x=date.train ,y=y.train),col="black") +
+        geom_point(data=train.temp.df,aes(x=date.train,y=pred.train.temp),col="orange") +
+        geom_line(data=train.temp.df,aes(x=date.train,y=pred.train.temp),col="orange") +
+        annotate("text", x=median(date.train)  , y=max(y.train), label= paste("training rmse:",rmse.train ), size=7,col="orange") +
+        geom_point(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red")  +
+        geom_line(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red") +
+        annotate("text", x=median(date.test)  , y=max(y.test), label= paste("test rmse:",rmse.test ), size=7,col="red") +
+        ggtitle(paste(model$method)) +
+        ylab("y - actual vs. predicted") +
+        xlab("Date - Training and Test period") +
+        theme_light()
+    },error = function(e){cat(": Error \n")})
+    
+  }
+  
+  tryCatch({
+    cor.train =  cor(y.train,pred.train.temp)
+    cor.test  = cor(y.test,pred.test.temp)
+    cv.Rsquared = model$results$Rsquared
+  },error = function(e){cat(": Error \n")})
+  
+  out = list(plots=list("cv.plot"=cv.plot,
+                        "pred.plot" =pred.plot),
+             correlations = list("cor.train" = cor.train,
+                                 "cor.test" = cor.test,
+                                 "cv.Rsquared" = cv.Rsquared))
+  return(out)
+}
