@@ -1,3 +1,4 @@
+
 Rescale.gtrends = function(df.t1,df.t2){
   df.t1 = df.t1$interest_over_time
   df.t2 = df.t2$interest_over_time
@@ -13,23 +14,21 @@ Rescale.gtrends = function(df.t1,df.t2){
   return(hits)}
 
 pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.") {
-
-# Splitting the time span into two spans, each < 5 years
+  
+  # Splitting the time span into two spans, each < 5 years
   time.span1 =  paste(as.Date(from), as.Date(from)+(5*365-1))
   time.span1.dates = ISOweek(seq(from=as.Date(from),to=as.Date(from)+(5*365-1), by=7))
   time.span2 = paste(as.Date(to)-(5*365-1), as.Date(to))
   time.span2.dates = ISOweek(seq(from=as.Date(as.Date(to)-(5*365-1)),to=as.Date(to), by=7))
   time.span.dates.combined = unique(c(time.span1.dates,time.span2.dates))
-
-
-google.input.data = as.data.frame(
-      matrix(nrow = length(time.span.dates.combined),
-             ncol = 1+length(keyword)))
-    
-    names(google.input.data) = c("date",paste(prefix,keyword,sep=""))
-    google.input.data$date =  time.span.dates.combined
-
-
+  
+  
+  google.input.data = as.data.frame(
+    matrix(nrow = length(time.span.dates.combined),
+           ncol = 1+length(keyword)))
+  google.input.data[,1] =  time.span.dates.combined
+  
+  
   for(p in 1:length(keyword)){
     if(status==1){cat("asking Google for statistics for",keyword[p]," - ",round(p/length(keyword),3)*100,"%" ,"\n")}
     tryCatch({ 
@@ -43,16 +42,17 @@ google.input.data = as.data.frame(
       
       # Rescaling the older data set to match (more or less) with the more recent data set
       hits = Rescale.gtrends(df.t1=google.temp.t1,df.t2=google.temp.t2)
-      keyword.pagename = ifelse(!is.null( google.temp.t1$interest_over_time$keyword[1]),
-                                google.temp.t1$interest_over_time$keyword[1],
-                                google.temp.t2$interest_over_time$keyword[1])
       google.input.data[,p+1] = as.numeric(hits)
       error.rate <<- 0
     },  error=function(e) { 
-    if(status==1){cat("\n Uups...Something went wrong with",keyword[p],"\n")  }
+      if(status==1){cat("\n Uups...Something went wrong with",keyword[p],"\n")  }
       Sys.sleep(0.5)
     })
     
   }
-  return(google.input.data)
+    
+    names(google.input.data) = c("date",paste(prefix,gsub(" ","\\.",keyword),sep=""))
+    return(google.input.data)
 }
+
+
