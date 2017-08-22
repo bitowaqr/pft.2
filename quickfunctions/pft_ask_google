@@ -13,7 +13,7 @@ Rescale.gtrends = function(df.t1,df.t2){
   hits = as.numeric(c(df.t1$hits,df.t2$hits))
   return(hits)}
 
-pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.") {
+pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.",gprop = "web") {
   
   # Splitting the time span into two spans, each < 5 years
   time.span1 =  paste(as.Date(from), as.Date(from)+(5*365-1))
@@ -34,11 +34,11 @@ pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="
     tryCatch({ 
       google.temp.t1 = gtrends(keyword = keyword[p],
                                geo = country_of_interest,
-                               time= time.span1 ,gprop = "web") 
+                               time= time.span1 ,gprop = gprop) 
       # Sys.sleep(0.1) 
       google.temp.t2 = gtrends(keyword = keyword[p],
                                geo = country_of_interest,
-                               time= time.span2 ,gprop = "web") 
+                               time= time.span2 ,gprop = gprop) 
       
       # Rescaling the older data set to match (more or less) with the more recent data set
       hits = Rescale.gtrends(df.t1=google.temp.t1,df.t2=google.temp.t2)
