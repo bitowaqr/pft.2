@@ -1,3 +1,18 @@
+Rescale.gtrends = function(df.t1,df.t2){
+  df.t1 = df.t1$interest_over_time
+  df.t2 = df.t2$interest_over_time
+  # In order to rescale, we look at the overlapping time span and try to find the best mutliplicative scaling factor, using a linear regression, without constant. Not sure if there are better ways to do this
+  match1 = df.t1[match(df.t2$date,df.t1$date),]
+  match1 = match1[!is.na(match1$date),]
+  match2 = df.t2[match(df.t1$date,df.t2$date),]
+  match2 = match2[!is.na(match2$date),]
+  rescale.factor = lm(data=match1,match2$hits ~ hits+0) 
+  df.t1$hits = round(predict(rescale.factor,newdata = df.t1),1) 
+  df.t1=df.t1[df.t1$date<min(df.t2$date),]
+  hits = as.numeric(c(df.t1$hits,df.t2$hits))
+  return(hits)}
+
+
 pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1) {   
   for(p in 1:length(google_related)){
        cat("asking Google for statistics for",google_related[p]," - ",round(step/length(google_related),3)*100,"%" ,"\n")
