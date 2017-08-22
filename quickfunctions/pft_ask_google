@@ -14,7 +14,7 @@ Rescale.gtrends = function(df.t1,df.t2){
 
 pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1) {   
   for(p in 1:length(keyword)){
-    cat("asking Google for statistics for",keyword[p]," - ",round(p/length(keyword),3)*100,"%" ,"\n")
+    if(status==1){cat("asking Google for statistics for",keyword[p]," - ",round(p/length(keyword),3)*100,"%" ,"\n")}
     tryCatch({ 
       google.temp.t1 = gtrends(keyword = keyword[p],
                                geo = country_of_interest,
@@ -32,7 +32,7 @@ pft_ask_google =function(keyword,country_of_interest="DE",from="2010-07-31",to="
       google.input.data[,p+1] = as.numeric(hits)
       error.rate <<- 0
     },  error=function(e) { 
-      cat("\n Uups...Something went wrong with",keyword[p],"\n")   
+    if(status==1){cat("\n Uups...Something went wrong with",keyword[p],"\n")  }
       Sys.sleep(0.5)
     })
     
