@@ -4,7 +4,7 @@
 # chunk 1
 
 # Install and load all required packages
-required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","corrplot","doParallel")
+required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","corrplot","doParallel","RANN")
 
 pft_packages <- function(package){
   for(i in 1:length(package)){
@@ -271,9 +271,6 @@ formula.list = list(glmnet.mod = list(y= y.train ,
 eval.function <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_eval_model")
 eval(parse(text = eval.function))
 
-if(0==1){
-  
-  
   # A loop to build and evalute the model
   models.de = list(result.list = list(), eval.list = list())
   for(i in 1:length(formula.list)){
@@ -288,10 +285,6 @@ if(0==1){
       cat(formula.list[[i]]$method,"evaluation done! \n")},
       error=function(e) {cat("error in",formula.list[[i]]$method,"\n")})
   }
-  
-  
-  
-}
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 # chunk 20
 #### evaluation plots

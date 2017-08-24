@@ -38,7 +38,7 @@ Some milestones: Google Flu Trend in 2008, Wikipedia predictions 2014, Twitter, 
 Elaborate...
 <br><br>
 
-#### Why Influenza?
+#### Why Influenza? 
 
 Influenza naturally lends itself to predictive modeling because it has features that make it easy to detect its signal in generally noisy data: Firstly, it has a strong seasonality in most countries. That means it has a clear start and a clear end, and in the summer months, there are literally zero cases of influenza. In diseases with more stable incidence rates, the signal to noise ratio may be too low for the models to pick it up. Second, during the flu season, between 5% and 20% of the population may get ‘the flu’. The online traces of people with rare diseases (say, achalasia) probably get lost into noise. And finally, it has distinct symptoms that most people will recognize as flu-symptoms, this means the symptoms are (somewhat) specific to influenza. In contrast, diseases with only subtle or very non-specific symptoms (say, fatigue) are certainly more problematic to track. However, there is no reason to believe that other diseases can not be surveyed using methods of digital epidemiology. A few papers have already shown promising results for [ADD LINK][LINK]. We would indeed be very interested to see how predictive models perform in diseases like allergic rhinitis, depression or even sunburns. If you have good data on this or know where to get it, we invite you to follow this tutorial, build your own model(s) and share your results with us and the public. 
 <br><br>

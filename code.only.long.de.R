@@ -412,4 +412,37 @@ rmse.boxplot =
   ylab("Model") +
   theme(axis.text.y = element_text(colour="grey20",size=20)) 
 
-rmse.boxplot
+rmse.boxplot +
+  ylim(0,3)
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+savegame.de = list(
+  "result.list" = models.de$result.list,
+  "eval.list" = models.de$eval.list,
+  "rmse.boxplot" = rmse.boxplot,
+  "parallelplot1" = parallelplot1,
+  parameters = list(
+    "term" = term,
+    "language_of_interest" = language_of_interest,
+    "country_of_interest" = country_of_interest,
+    "from" = from,
+    "to" = to,
+    "split.at" = split.at,
+    "split" = split),
+  data = list(
+    "df.full" = df.full,
+    "df.train" = df.train,
+    "y.train" = y.train,
+    "date.train" = date.train,
+    "df.test" = df.test,
+    "y.test" = y.test,
+    "date.test" = date.test),
+  "stat" = stat)
+
+#save(savegame.de,file="/users/waqr/documents/pft.2/models.savegames/savegame.de.Rdata")
+#rm(savegame.de)
+#load(file="/users/waqr/documents/pft.2/models.savegames/savegame.de.Rdata")
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+#                                       END                                         #
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
