@@ -9,7 +9,7 @@ pft_eval_model = function(model){
  
 
   tryCatch({ 
-  if(models.de$result.list$M.bagtree$bestTune$parameter !="none"){
+  if(model$bestTune$parameter !="none"){
     cv.plot = plot(model)}
     error=function(e) {}})
   
