@@ -58,7 +58,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
       temp.dat<-article_pageviews(article = pages[p],
                                   project = paste(language_of_interest,".wikipedia",sep=""),
                                   start = "2015100100",end = pageview_timestamps(to))
-      temp.wiki.pageview = data.frame(as.Date(temp.dat$date),scale(temp.dat$views)) # Note: why scale? Because pre 2016/post2016 has different pageview definitions?!
+      temp.wiki.pageview = data.frame(as.Date(temp.dat$date),(temp.dat$views)) 
       names(temp.wiki.pageview) = c("date",pages[p])
       
       url.lookup = paste("www.wikishark.com/title/",language_of_interest,"/",pages[p],sep="")
@@ -70,7 +70,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
      # page.id=fromJSON(getURL(paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=info&titles=",pages[p],"&format=json",sep="")))$query$pages[[1]]$pageid
       ws.url = paste("http://www.wikishark.com/json_print.php?values=",page.id,"&datefrom=",from.wikishark,"&dateto=",to.wikishark,"&view=2&normalized=0&scale=0&peak=0&log=0&zerofix=0&sumall=0&format=csv", sep="")
       ws.csv = read.csv(ws.url)[,1:2]
-      temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),scale(as.numeric(ws.csv[,2])))
+      temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),(as.numeric(ws.csv[,2])))
       names(temp.ws.pageview) = c("date",pages[p])
       temp.wiki.pageview = rbind(temp.wiki.pageview,temp.ws.pageview)
       
