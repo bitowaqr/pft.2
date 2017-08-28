@@ -44,7 +44,7 @@ pft_eval_model = function(model){
     cor.train =  cor(y.train,pred.train.temp)
     cor.test  = cor(y.test,pred.test.temp)
     cv.Rsquared = model$results$Rsquared
-    lowest.rmse =  min(model$results$RMSE)
+    lowest.rmse =  min(model$results$RMSE,rm.na=T)
   },error = function(e){cat(": Error \n")})
   
   out = list(plots=list("cv.plot"=cv.plot,
