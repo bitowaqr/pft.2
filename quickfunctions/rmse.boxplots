@@ -1,4 +1,4 @@
-rmse.boxplots = function(model.list){
+rmse.plots = function(model.list, box = 1, parallel = 0){
 
 t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
 for(s in 1:length(model.list)){
@@ -29,8 +29,15 @@ rmse.boxplot =
   xlab("model") +
   ylab("rmse") +
   theme(axis.text.y = element_text(colour="grey20",size=20)) 
+  
+  parallelplot = parallelplot(resamples( stat$res))
 
-return(rmse.boxplot)
+  
+if(box==1){
+return(rmse.boxplot)}
+if(parallel ==1){
+return(parallelplot)
+}
 }
 
 
