@@ -673,6 +673,14 @@ start.time = Sys.time()
   cat(finished.time)
 ```
 
+```{r saving}
+# saving results
+for(i in 1:length(models.de$result.list)){
+temp.model = models.de$result.list[i]
+  save(temp.model,file=paste("/users/waqr/documents/pft.2/models/",names(models.de$result.list)[i],".de.tutorial.rdata",sep=""))
+  }
+```
+
 ```{r evaluation}
 models.de = list(result.list = list(M.pls = M.pls,
                                     M.ridge = M.ridge,
