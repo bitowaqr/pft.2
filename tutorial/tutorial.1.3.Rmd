@@ -1,20 +1,106 @@
 ---
-title: "R Notebook"
-author: "Paul Schneider"
-date: "2017-08-22"
-output: html_notebook
+output:
+  html_notebook: 
+    toc: true
+    toc_float: true
+    toc_depth: 5
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+header-includes:
+- \usepackage[left]{lineno}
+- \linenumbers
 ---
+<br><br>
+<center><b><font size="6" color="#0099ff"> - PREPRINT - </font> </b></center>  
+<b> <font size=5> How to build a real-time prediction model for influenza in Germany</font> </b>  
+
+__Paul Schneider__, *Maastricht University, Netherlands Institute of Health Service Research*  
+__David Barnett__, *Maastricht University*  
+__John Paget__, *Netherlands Institute of Health Service Research*  
+__Peter Spreeuwenberg__, *Netherlands Institute of Health Service Research*  
+__Christel van Gool__, *Maastricht University*  
+<br>
+__Contact: schneider.paulpeter@gmail.com __
+
 ****
-*This is an R-tutorial on how to build a (near) real-time prediction model for tracking influenza activity in the US and in Germany, based on data from Google and Wikipeida, which is freely available.* 
-*For comments or questions, contact: schneider.paulpeter@gmail.com*
-<br><br><br>
+### Summary
+This is a fully reproducable R-tutorial on how to build a (near) real-time prediction model for influenza in Germany, based on search query data from Google Trends and page view statistics from Wikipedia. All code and data is openly available. Instructions include guidance on how to identify and download relevant data, format and pre-process the retrieved information, and build and evaluate prediction models, using multiple statistical modelling techniques (a.k.a. machine learning). In addition, we will provide a short introduction to the emerging field of 'Digital Epidemiology' and discuss some of its critical methodological issues.
 
-___G.COORELATE, G.TRENDS, and WIKI DOWNLOADS ARE REDUCED to 3. ONLY LASSO AND CUBIST__
+__TL;DR: [Code only version](ADD LINK)__
 
-```{r Installing and loading packages, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+Methods are inspired by the [caret](https://cran.r-project.org/web/packages/caret/caret.pdf) R-package and the book [Applied Predictive Modelling](http://appliedpredictivemodeling.com/), both by Max Kuhn.
+
+<br>
+
+<br>
+****
+
+### Introduction
+
+#### Digital Epidemiology
+In the past, people could only went to see their doctor when they were sick and wanted to get information, guidance and treatment. Many national disease surveillance systems are therefore based on doctors as sentinels: health care providers and medical laboratories are being asked to report the number of cases for a certain disease to the surveillance organization. In Germany, for example, laboratories are required to report any proof of influenza viruses to the local health authority, which in turn reports it to the Robert Koch Institute. Nowadays, however, many people first turn to the internet. They seek health information by googling for their sysmptoms, look up diseases or treatments on Wikipedia or connect with others through social media. For Epidemiologists, this offers the opportunity to track these digital traces of people. This has been described as ['Digital Epidemilogy'](http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1002616): "Digital data sources, when harnessed appropriately, can provide local and timely information about disease and health dynamics in populations around the world". 
+
+#### __Milestones of digital epidemiology__
+
+  * In 2008, Google Flu Trend was launched and accompanied by a broad media coverage. ..
+  * In 2014, McIver and Brownstein claimed that Wikipedia page view data ...
+  * Twitter
+  * Health Map
+  * Influenza mao netherlands
+
+#### Why Influenza? 
+In principle, the methods of surveillance, we use in this example, can be applied to any disease. However, some of the features of influenza make it easier to detect relevant predictors and monitor its activity. First, influenza has a strong seasonality (in most countries). Every year there is a start and an end, and during the summer months there are literally no cases of influenza. This strong annual pattern can be detected easily. In diseases, in which the incidence is more stable, there might be not enough variation to distinguish signal and noise. Second, during the flu season, between 5% and 20% of the population get sick. The online traces of rare diseases (say, achalasia) probably get lost in noise. And finally, influenza has distinct symptoms that most people will recognize as flu-symptoms, this means the symptoms are (somewhat) specific to influenza. In contrast, diseases with only subtle or very non-specific symptoms (say, fatigue) are certainly more problematic to track. 
+
+Nevertheless, there is no reason to assume that other diseases can not be surveyed using similar methods. A few papers have already shown promising results in ...Ebola, TUberculosis... [ADD LINK][LINK]. We would indeed be very interested to see how predictive models perform in further diseases, like allergic rhinitis, depression or even sunburns. If you have good data on this or know where to get it, we invite you to follow this tutorial, build your own model(s) and share your results with us and the public.
+
+
+#### __Issues__
+
+The huge amount of available data and the novelity of methods are a challenge.  
+Overly optimistic because of 
+
+  * Variety of methods and data sources.
+  * Inconsistent reporting of methods and results, the ai should be reproducability. In the area of digital epidemiology, this might imply open sharing of code and data- otherwise reproduciability is rarely possible.
+  * The failure to strictly separate trainig and test data sets
+     * Espeically in split-cross validation, leaking info from the future to the past
+  * reporting of correlation coeficients, adjusted or not, or rmse, both?!
+  * Research area mostly in the US (cite global paper), unclear whether methods are reproducible in countries in which digitalization is not that advanced.
+
+Research within digital epi must adhere to the rigour and caution other epidemiological project are also held accountable to.
+<br>
+
+****
+
+<br>
+
+### Tutorial
+
+#### Overview 
+We will build a model for predicting the influenza incidence (lab-confirmed cases) in Germany in near real-time ('Nowcasting'), by using data from various sources. We will start with getting information on influenza incidence in Germany, since the availability of the outcome data determines the scope and time horizon of the model we build. We then download data on search queries and page view statistics from Google Correlate, Google Trends and Wikipedia, respectively. The data have to be formatted, merged and pre-processed, before entering into the model. Subsequently, we will use various so called machine learning methods to select relevant predictors and build prediction models. Finally, we will compare the different models in terms of predictive accuracy and select the best model to predict this week's influenza activity.
+
+*We would like to point out that when we speak of 'predictions', we use the term in its [statistical sense](https://en.wikipedia.org/wiki/Prediction#Statistics). We do not mean ’forecasting, as in forecasting future influenza cases. We are doing 'Nowcasting': We observe what people were doing on the internet until today and infer from this information how many influenza cases there are about now*
+<br>
+
+#### Data sources
+Outome data is taken from the [Robert Koch Institute](https://survstat.rki.de/Content/Query/Select.aspx), predictor data from [Google Correlate](https://www.google.com/trends/correlate/), [Google Trends](https://trends.google.com/trends/) and Wikipedia via it's [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews) and [Wikishark](http://www.wikishark.com/). All analyses are performed using the statistical software [R/R Studio](https://www.rstudio.com/), and plenty of its packages, particularly the [caret](https://cran.r-project.org/web/packages/caret/caret.pdf) package. Everything we use is  available online for free. The data used in this example is also available on github. If you want to build your own model, you have to have a Google account to upload outcome data to Google Correlate. 
+<br>
+
+#### Transferability
+If you want to transfer this approach to another setting (another country or another disease), the only thing you need is a set of outcome data, i.e. good-quality data of the actual weekly incidence of the disease, over a sufficient time span (1 year +), in a specific country. The rest should work (more or less) automatically, unless you wish to add more data sources as predictors, which may require some more editing. Depending on the country in which you want to predict disease activity, the availability and quality of Google and Wikipedia data may differ substantially. For Wikipedia data, page view statistics can only be distinguished by language, but not by country. Language can be a good proxy in some cases (e.g. Japanese, Korean, Italian, etc.), but a pretty bad one in others (e.g. French, English, Spanish). You can look up how much of a [country's Wikipedia traffic is in a specfific language](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerCountryBreakdown.htm), and how much [Wikipedia traffic within a specific language is from a specfific country](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerLanguageBreakdown.htm). Moreover, with weekly data, you should be aware that there are [divergent opinions](http://chartsbin.com/view/41671) about what is the best starting day for a week (Saturday? Sunday? Monday?).
+
+****
+
+<br>
+
+#### Getting started
+Before building the model, we need to install and load the required R-packages (yes, there are a lot)...
+
+```{r Installing and loading packages, results='hide', message=FALSE, warning=FALSE}
 # Install and load all required packages
-
-required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","corrplot","doParallel")
+# This may take a while...
+required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","cowplot","corrplot","doParallel","glmnet", "Cubist","pls","devtools","plotmo","plotrix","TeachingDemos","earth","kernlab","rpart","party","grid","zoo","mvtnorm","modeltools","stats4","strucchange","sandwich","elasticnet","lars","randomForest","ipred","e1071") # 
 
 pft_packages <- function(package){
     for(i in 1:length(package)){
@@ -24,77 +110,50 @@ pft_packages <- function(package){
 
 pft_packages(required_packages)
 
-# gtrendR needs to be the dev version
+#  gtrendR has to be the developer version. If you don't already have it, install it throughgithub:
 #  devtools::install_github("PMassicotte/gtrendsR")
 #  library(gtrendsR)
 ```
+<br>
 
-
-## Introduction: Digital Epidemiology
-What is 'Digital Epidemiology'?  
-
-The idea behind the predictive influenza model is quite intuitive: We expect that people who get infected with influenza will tend to look up their symptoms, blablabla...
-Some milestones: Google Flu Trend in 2008, Wikipedia predictions 2014, Twitter, etc...
-Elaborate...
-<br><br>
-
-#### Why Influenza? 
-
-Influenza naturally lends itself to predictive modeling because it has features that make it easy to detect its signal in generally noisy data: Firstly, it has a strong seasonality in most countries. That means it has a clear start and a clear end, and in the summer months, there are literally zero cases of influenza. In diseases with more stable incidence rates, the signal to noise ratio may be too low for the models to pick it up. Second, during the flu season, between 5% and 20% of the population may get ‘the flu’. The online traces of people with rare diseases (say, achalasia) probably get lost into noise. And finally, it has distinct symptoms that most people will recognize as flu-symptoms, this means the symptoms are (somewhat) specific to influenza. In contrast, diseases with only subtle or very non-specific symptoms (say, fatigue) are certainly more problematic to track. However, there is no reason to believe that other diseases can not be surveyed using methods of digital epidemiology. A few papers have already shown promising results for [ADD LINK][LINK]. We would indeed be very interested to see how predictive models perform in diseases like allergic rhinitis, depression or even sunburns. If you have good data on this or know where to get it, we invite you to follow this tutorial, build your own model(s) and share your results with us and the public. 
-<br><br>
-
-## Tutorial: Building 'Influenza Nowcast'  
-
-In this tutorial, we will build models for tracking the activity of __influenza-like illness__ in the US; and for __influenza__ (lab-confirmed cases) in Germany. We will do so by using outome data from the [Centers for Disease Control and Prevention](https://gis.cdc.gov/grasp/fluview/fluportaldashboard.html) and the [Robert Koch Institute](https://survstat.rki.de/Content/Query/Select.aspx), predictor data from [Google Correlate](https://www.google.com/trends/correlate/), [Google Trends](https://trends.google.com/trends/) and Wikipedia via it's [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews) and [Wikishark](http://www.wikishark.com/), and the statistical software [R/R Studio](https://www.rstudio.com/), and plenty of its packages. All data are freely available online - You need a Google account to access its data, though! 
-
-We start with some weekly data on influenza. We then (more or less automatically) download search query statistics from Google Correlate, Google Trends and page view statistics from Wikipedia. We pre-process the data a bit, fit its formatting and remove some features that would interfer with the learning algorithms. Subsequently, we use some off-the-shelf machine learning tools to build a number of models. Finally, we evaluate how the models are doing and select one to run it on the most recent data. The aim of the model is to give an estimate of how many people have influenza *about now*. Ideally, we can also get some indications of how confident we can be about the estimates. 
-
-  * The word *prediction* can be a bit ambiguous/ Nowcasting/Forecasting- elaborate
-
-
-If you want to transfer this approach to another setting, the only thing you need is a set of outcome data, i.e. good-quality data of the actual weekly incidence of the disease, over a sufficient time span (1 year +), in a specific country. The rest should work (more or less) automatically, unless you wish to add more data sources as predictors, which may require some more editing. 
-
-Depending on the country in which you want to predict disease activity, the availability and quality of Google and Wikipedia data may differ substantially. For Wikipedia data, page view statistics can only be distinguished by language, but not by country. Language can be a good proxy in some cases (e.g. Japanese, Korean, Italian, etc.), but a pretty bad one in others (e.g. French, English, Spanish). You can look up how much of a [countries Wikipedia traffic is in a specfific language](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerCountryBreakdown.htm), and how much [Wikipedia traffic within a specific language is from a specfific country](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerLanguageBreakdown.htm). Moreover, differences in the understanding of [on what day a week starts](http://chartsbin.com/view/41671) can be a bit tricky.
-<br><br>
-
-## Getting started
-
-Before building the models, we need to make a few decision:  
-
-  * What is the outcome of interest/Which disease are we looking at?
-    + __Influenza, laboratory confirmed cases__
-  * For which country do we want to build the model? Which language is most relevant?
-    * __Germany, German__
-  * How do we split the data into training and test data?
-    * __Time series cross-validation: 2010-2016, Evaluation: 2016-2017__
-  * How do we assess the model?
-    * Root-Mean-Squared-Error (Or Mean Absolute Error?!)
-
+...and we should specify a few key parameters:
 ```{r}
-term = "Influenza" # 'term' should correspond to a Wikipedia page in the respective language
-country_of_interest = "DE" # Germany in ISO_3166-2 (See: https://en.wikipedia.org/wiki/ISO_3166-2)
-# origin_language = "en" # Language in which the start_term was defined
-language_of_interest = "de" # German in ISO_639-1 (See: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+# What is the outcome of interest?  
+term = "Influenza" #  laboratory-confirmed cases    
+
+# For which country do we want to build the model? 
+country_of_interest = "DE" # Germany in ISO_3166-2 (See: https://en.wikipedia.org/wiki/ISO_3166-2)  
+
+# Which language is relevant?
+language_of_interest = "de" # German in ISO_639-1 (See: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)  
+
+# What the relevant time horizon (i.e. the time span we have data for)
 from = as.Date("2010-07-31") # Start
-to = as.Date("2017-07-31") # End 
-split.at = as.Date("2016-08-01") # Split between training and evaluation data
+to = as.Date("2017-07-31") # End   
+
+# How do we split the data into training and test data?
+split.at = as.Date("2016-08-01") 
+# --> Training data:  2010-07-31 - 2016-08-01
+# --> Test Data:      2016-08-02 - 2017-07-31
 ```
-<br><br>
+<br>
 
-## Outcome data
+### Get data
 
-Now, we take German influenza incidence data (cases per per 10,000) from the [Robert Koch Institute](https://survstat.rki.de/Content/Query/Select.aspx) from August 2010 until August 2017 (If you run the code below, the data we used will be downloaded from Google Drive). The data do not come in the format we need, so we have to re-arrange it a bit:
-```{r showing outcome data, echo=TRUE, message=TRUE, warning=TRUE}
+#### Outcome data
+We can download German influenza incidence data (cases per per 10,000) from the Robert Koch Institute, from August 2010 until August 2017. We uploaded a spreadhseet to github, so it is easier to access. However, you can go to [Survstat](https://survstat.rki.de/Content/Query/Select.aspx) and customize your data query. The data do not come in the format we need, so we have to re-arrange it a bit.
+```{r showing outcome data, echo=TRUE, message=TRUE, warning=TRUE,results='asis'}
 # Load data from github repository
 influenza.de = read.csv("https://raw.githubusercontent.com/projectflutrend/pft.2/master/outcome%20data/RKI.data.de.csv")
 names(influenza.de) = c("date","y") 
 head(influenza.de)
 
-# Re-formatting 'date', and selecting the time span 2010-07-31 - 2017-07-31
+# Re-formatting 'date', and removing irrelevant data points
 influenza.de$date = paste(sub("w","W", influenza.de$date),"-1", sep="")
 influenza.de$date  = ISOweek2date(influenza.de$date)
 influenza.de = influenza.de[influenza.de$date>as.Date("2010-07-31") & influenza.de$date<=as.Date("2017-07-31"),]
-# The RKI data does not report data during summer months, in which there are no influenza cases. However, we want to have a model that predicts those zero-months as such as well. So, we need to add more rows and set them to zero
+
+# The RKI data does not report data during summer months, in which there are literally no influenza cases. However, we want to have a model that predicts those zero-months as such, as well. Thus, we will fill the gap and set the cases for the inserted weeks to zero
 reference =data.frame(date = seq(from=min(influenza.de$date),
                                  to=max(as.Date(influenza.de$date)),
                                  by=7))
@@ -120,21 +179,26 @@ ggplot(influenza.de,aes(x=date,y=y)) +
   ylab("Incidence per 10,000") +
   ggtitle("Influenza in Germany")
 ```
-<br><br>
 
-## 'Null-Model'
-Before we go on to build a prediction model, we should quickly define what we will compare our prediction model against....__Elaborate__ When our models predicts the onset of the season two weeks too late, how can we know if this can be considered a good approximation?
+The figure shows the influenza seasons 2010/2011 to 2016/2017, in Germany. More specifically, it shows 'laboratory-confirmed cases'. It should be noted that this type of outcome is probably not ideal to use as a gold standard for training a digital surveillance system that is based on symptoms: If people feel like having the flu, they will look up influenza on Google and Wikipedia. Flu-like symptoms that occur during the summer months are, however, not caused by the influenza virus- this is why the Robert Koch Institute doesn't report any data for these months and why we have to assume a flat line at zero. Our prediction model has to deal with the challenge of distinguishing between people who have the real influenza and people who only have influenza-like symptoms. 
 
-It would not be fair to compare a prediciton model against a flat line at the mean, or at zero cases. Our prediction models should *at least* be better than a 'naiv' forecast, which only knows what has happend in the past, and extrapolates the pattern into the future (*a future that is the present to us*). To build this Null-Model, we will use the [prophet](https://cran.r-project.org/web/packages/prophet/prophet.pdf) algorithm that was build by some smart people from facebook. There are probaly more sophisticated models to forecast influenza activity, but this is still better than nothing. 
+|                                    |                                 | 
+|------------------------------------|---------------------------------|
+|As a comparison: pattern of influenza-like illness in Germany, as reported by the [Robert Koch Institute](https://influenza.rki.de/Saisonberichte/2015.pdf). Influenza-like illness is probably more appropriate as an outcome for nowcasting models, as it is a better reflection of the incidence of influenza-like symptoms. However, for Germany, this data is not publicly available.  |![](https://github.com/projectflutrend/pft.2/raw/master/pics/ili%20germany.png)    |
+<br>
 
-For the present data, we will split the data set into training(seaons 2010/2011-2015/2016) and test data (season 2016/2017), fit a forecast model using the training data and ask for a forecast for the next year. Subsequently, we can compare the predictions with the actual data from the test data set.
+
+#### The 'null-model'
+Before we go on to build a prediction model, we should quickly define what we will compare our  model against. It would not be fair to compare a prediction model against a flat line at the mean, or at zero cases. This would be like a clinical trial with no comparator. So, let's compare against placebo: Our model should *at least* be better than a 'naiv' forecast, which only knows what has happend in the past, and extrapolates the pattern into the future (*a future that is the present to us*). To build this Null-Model, we will use the [prophet package](https://research.fb.com/prophet-forecasting-at-scale/)  that was build by people at Facebook. It is supposed to automatically detect changes in trends, fit a piecewise linear growth curve and add a yearly seasonal component, modeled using Fourier series. 
+
+For the present data, we will split the data set into training (seaons 2010/2011-2015/2016) and test data sets (season 2016/2017), we fit a forecast model using the training data and ask for a forecast for the next year. Subsequently, we can compare the predictions with the actual data from the test data set.
 
 ```{r prophet preview, message=FALSE, warning=FALSE}
-# Spliting the data for the forecast model into train and test 
+# Spliting the data for the forecast model into train and test data set
 train.influenza.de = influenza.de[influenza.de$date<split.at,]
 test.influenza.de = influenza.de[influenza.de$date>=split.at,]
 
-# Propheting
+# 'Propheting'
 m <- prophet(df=data.frame(ds = train.influenza.de$date,
                            y=train.influenza.de$y),
              growth = "linear",
@@ -146,179 +210,171 @@ p = plot(m, forecast) +
   geom_point(data=test.influenza.de, aes(x=date,y=y),col="pink",lty="dashed", size=2)
 p
 ```
-*The prophet-forecast algorithm tries to find a pattern in the available data (2010/2011-2015/2016) and extrapolates it into the future (2016/2017).  We can see that the 2016/2017 influenza season had unusually many cases. The forecast model would have underpredicted the number of cases, predicted the onset, peak and end of the season a few weeks to early.* 
-<br><br>
 
-## Predictor data
+The prophet-forecast algorithm tries to find a pattern in the available data (2010/2011-2015/2016) and extrapolates it into the future (2016/2017).  We can see that the 2016/2017 influenza season was unusually strong, compared to the last six seasons. The forecast model would have underpredicted the number of cases. Furthermore, the season started ealier than usual. So, the forecast model predicted the onset, peak and end of the season a few weeks earlier than they occured. Later, we can use this forecast and compare it to what our Nowcast-model predicts. There are probaly better models to forecast influenza, but it is still better than nothing.
+<br>
 
-We will collect data on potential predictors from three main sources:
+#### Google Correlate
+[Google Correlate](https://www.google.com/trends/correlate/) is a tool that can identify search queries that are highly correlated with any time series data you upload (Even for [randomly generated numbers](https://www.r-bloggers.com/google-correlate-certainly-does-not-imply-causation/) it will find a good match). It was a building block of [Google Flu Trend](https://googleblog.blogspot.co.uk/2011/05/mining-patterns-in-search-data-with.html). In addition, you can also identify queries that are correlated with another query: For example, find queries that are related to "Influenza" queries. See this [paper](https://www.google.com/trends/correlate/nnsearch.pdf) for more info on how Google Correlate and Trends works, and this [guide](http://people.ischool.berkeley.edu/~hal/Papers/2015/primer.pdf) on how to use it.
 
-  * [Google Correlate](https://www.google.com/trends/correlate/)
-  * [Google Trends](https://trends.google.com/trends/)
-  * Wikipedia via it's [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews) and [Wikishark](http://www.wikishark.com/)
+Unfortunately, there is no Google Correlate API available for R, so you need to open the website in your browser and upload your weekly outcome data manually. Google gives you 100 correlated search queries within the country you select (Not all countries are available) and you can download the results as a .csv file. What you need for that is a) A Google Account and b) A spreadsheet with your data in a specific format. Here, we don't want to leak any information from the test data into the training data- So we will ask for correlated queries only for the trained data set, withholding any patterns seen in the test data set. It's worth noting that there is a "shift series" button. It shifts your data one week in time, if you think there might be a delay between people using Google and the actual reporting of influenza cases (Only shift your data into the past, the predictors should be collected during the week the cases were reported or BEFORE the cases were reported, not afterwards). 
 
-__*Add remark about the 'messiness' of this type of data*__
-<br><br>
-
-### Google Correlate
-
-Google Correlate is a tool that can identify search queries that are correlated with any time series data you upload (literally for any data it will find queries that are highly correlated, even [randomly generated numbers](https://www.r-bloggers.com/google-correlate-certainly-does-not-imply-causation/).  The algorithm was also a building block of Google Flu Trend [link]. See this [paper](https://www.google.com/trends/correlate/nnsearch.pdf) for more detailes on how Google Trends works, and this [guide](http://people.ischool.berkeley.edu/~hal/Papers/2015/primer.pdf) on how to use it.
-
-Unfortunately, there is no Google Correlate API available for R, so you need to go to the website and upload your weekly outcome data manually. Google gives you 100 correlated search queries within the country you select (Not all countries are available) and you can download the results as a .csv file. What you need for that is a) A Google Account and b) A spreadsheet with your data in a specific format. Here, we don't want to leak any information from the test data into the training data- So we will ask for correlated queries only for the trained data set, withholding any patterns seen in the test data set. It's worth noting that there is a "shift series" button. It shifts your data one week in time, if you think there might be a delay between people using Google and the actual reporting of influenza cases (Only shift your data into the past, the predictors should be collected during the week the cases were reported or BEFORE the cases were reported, not afterwards). 
-
-For some reason, Google Correlate won't provide data for the entire time span. It only gives data points untill 2017-03-12 (Which is strange...). Anyway, we need to extract the keywords and download the datapoints from google trends.
+*For some reason, Google Correlate won't provide data for the entire time span. It only gives data points untill 2017-03-12. Therefore, we need to extract only the keywords and download the datapoints from google trends.*
 
 ```{r prepare outcome data for g.cor, echo=TRUE, message=FALSE, warning=FALSE}
-# We prepare the German Influenza data and save it in the right format
-g.cor.influenza.training.upload = influenza.de[influenza.de$date<split.at,]
-# Making Sunday the first day of the week (This is a bit inaccurate) 
-g.cor.influenza.training.upload$date = g.cor.influenza.training.upload$date-1 
-# Saving the file on the desktop
-write.table( g.cor.influenza.training.upload, col.names=FALSE,row.names = FALSE,
-             sep=",",file="/users/waqr/desktop/g.cor.influenza.training.upload.csv")
+# Prepare the outcome data in the right format
+g.cor.influenza.training.upload = influenza.de[influenza.de$date<split.at,]  
 
-### --> Now, we go to https://www.google.com/trends/correlate/ 
-###     Upload the table, and download results
-###     data comes scaled and centred
+# Adjusting week format: making Sunday the first day of the week
+g.cor.influenza.training.upload$date = g.cor.influenza.training.upload$date-1  
+
+# Saving the file in your default folder
+# write.table( g.cor.influenza.training.upload, col.names=FALSE,row.names = FALSE,sep=",",file="/FILL_IN_A_PATH/g.cor.influenza.training.upload.csv")  
+
+### --> Now, go to https://www.google.com/trends/correlate/ 
+###     Login, upload the spreadhseet, and download results
 ```
 <br>
 
-Upload data to Google Correlate    |  Results
-:---------------------------------:|:-------------------------:
-![](https://raw.githubusercontent.com/projectflutrend/pft.2/master/pics/google.correlate.website1.png)  |  ![](https://raw.githubusercontent.com/projectflutrend/pft.2/master/pics/google.correlate.website2.png)|
+|Upload data to Google Correlate   |Google Correlate Results
+-----------------------------------|---------------------------
+|![](https://raw.githubusercontent.com/projectflutrend/pft.2/master/pics/google.correlate.website1.png)  |![](https://raw.githubusercontent.com/projectflutrend/pft.2/master/pics/google.correlate.website2.png)|
 
 ```{r extract g.cor.keywords}
-# We put the data we downloaded on Github:
+# We have put the Google Correlate data for this example on Github:
 github.url = "https://raw.githubusercontent.com/projectflutrend/pft.2/master/input%20data/correlate-g_cor_influenza_training_upload.csv"
 # The first 10 lines are text, so we want to skip this part
 g.cor.results = read.csv(skip=10,github.url) 
-# extracting names, except date and 'y'
+# extracting names, except 'date' and 'y'
 g.cor.keywords = names(g.cor.results)[-c(1,2)] 
+# R inserted "." for spaces, we have to undo this:
 g.cor.keywords = gsub("\\."," ",g.cor.keywords)
 
 g.cor.keywords[1:20] # Showing the first 20 keywords
 ```
+*If you wonder what "J11 1" might be - It's the ICD-10 code for Influenza. Doctors print it on the letters for sick leaves. It seems as if some patients were curious what the doctor had diagnosed them with. Other terms refer to [5] fever, [10] Flu in Children, [11] influenza coughing or [17] Influenza how long*
+<br><br>
+
+#### Google trends
+[Google Trends](https://trends.google.com/trends/) is "a public web facility of Google Inc., based on Google Search, that shows how often a particular search-term is entered relative to the total search-volume across various regions of the world, and in various languages" - (from [Wikipedia](https://en.wikipedia.org/wiki/Google_Trends)). It can also be used to identify related search queries ("People who searched for this, also searched for this" - notice the difference between Google Trends and Correlate!)
+
+First, we are going to download the data for the 100 keywords we have identified using Google Correlate. Second, while Google Correlate will most often provide you with good predictors, there might be  additional value in taking into account predictors from Google Trends as well, even if only to control for confounding or media-generated over-prediction. Thus, we will download search query statistics for 'influenza', and for 15 related queries. Third, we retrive data for 'influenza'-queries in Google News. If you like, you can expand your requests and increase the numbers of predictors by also retrieving related keywords from related keyword, feed related keywords into Google Correlate, add more News-queries etc.
+
+__Cave__: Google Correlate only gives you weekly data for time spans < 5 years. As a possible work-around, we split our time series into smaller chunks and download them separately. But because of the way the data is generated, overlapping time series do not match 100%, even after adjusting the scale. Also, it is not clear whether results will be reproducible, as Google might show slightly different figures in new queries.
 <br>
-
-## Google trends
-
-First, we are going to download data for the 100 keywords we have identified using Google Correlate.
-
-Moreover, while Google Correlate will most often provide you with good predictors, there might be considerable additional value in considering predictors from Google Trends as well, even if only to control for confounding or media-generated over-prediction. __Elaborate more on News->Click cycles__
-
-In addition to Google Correlate keywords, we will download search query statistics for influenza ('term'), and for the 15 most related queries. These are queries that people will also look for in search sessons in which they look for 'influenza'. If you like, you can expand your request, by also retrieving related keywords from related keyword etc.
 
 ```{r Find related google queries, message=TRUE, warning=TRUE}
-term = "influenza"
-country_of_interest="DE"
-from="2010-07-31"
-to="2017-07-31"
-status= 1
+# Identifying 15 related search queries
+  # We have already set these parameters: 
+  # term = "influenza"; country_of_interest="DE"; from="2010-07-31"; to="2017-07-31"; status= 1
+  google_primer = gtrends(keyword=term,
+                          geo=country_of_interest,
+                          time=paste(from,to),
+                          gprop ="web")
 
-# Identify 15+ related search queries
-  google_primer = gtrends(keyword=term,geo=country_of_interest,time=paste(from,to),gprop ="web")
   google_related = google_primer$related_queries$value[google_primer$related_queries$related_queries=="top"]
   g.trends.keywords = c(term,google_related)
-  g.trends.keywords[1:5]
+  print(g.trends.keywords)
 ``` 
 
+The loops to download the search queries are messy and rather long. We will just load them from github, where you can have a closer [look at them](https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_google), if you want. 
 
-__Noteworthy__: 5-year time span restriction: Google Correlate only gives you weekly data for time spans < 5 years. As a possible work-around, you could split your time frame into smaller chunks and download data separately. But because of how the data is generated, it does not match 100% (beyond differences in scaling, for which you can adjust) - See code below.
-<br>
-
-The loops to download the search queries are messy and rather long. We will just load them from github, where you can have a closer [look](https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_google). 
-
-__*NOTE: FUNCTIONS DO ONLY WORK FOR THE TIME SPAN SET IN THIS EXMAPLE, NEEDS TO BE REVISED*__
-__TRAINING TESTING SPLIT NECCESSARY???__
-```{r}
+__At the moment, functions only work for the given time span__
+```{r gtrends download, message=TRUE, warning=FALSE}
 # Loading functions from github:
 google.function <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_google")
 eval(parse(text = google.function))
 
 # Functions loaded are:
-# pft_ask_google(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.")
-# To split the time span and download and merge query statistics from Google
+  # pft_ask_google(keyword,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.")
+  # To split the time span and download and merge query statistics from Google
 
-# Rescale.gtrends(df.t1,df.t2) 
-# In order to rescale, we look at the overlapping time span and try to find the best mutliplicative scaling factor, using a linear regression, without constant. Not sure if there are better ways to do this
-
+  # Rescale.gtrends(df.t1,df.t2) 
+  # In order to rescale, we look at the overlapping time span and try to find the best mutliplicative scaling factor, using a linear regression, without constant. Not sure if there are better ways to do this
 
 # Download query statistics for
   # a) google.correlate queries:
-g.cor.input =  pft_ask_google(g.cor.keywords[1:3],country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.cor.")
+  g.cor.input =  pft_ask_google(g.cor.keywords,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 0,prefix="g.cor.")
  
  # b) trends queries:
-g.trends.input =  pft_ask_google(g.trends.keywords[1:3],country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.trends.")
+  g.trends.input =  pft_ask_google(g.trends.keywords,country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 0,prefix="g.trends.")
 
  # c) news on influenza as a potentially relevant (negative) predictor
-g.news.input =  pft_ask_google("influenza",country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 1,prefix="g.news.",gprop="news")
+  g.news.input =  pft_ask_google("influenza",country_of_interest="DE",from="2010-07-31",to="2017-07-31",status= 0,prefix="g.news.",gprop="news")
 
+# Merge the three dat sets
 google.input.data = merge(g.cor.input,g.trends.input,by="date",all=T)
 google.input.data = merge(google.input.data,g.news.input,by="date",all=T)
 
 dim(google.input.data)
-head(google.input.data[,1:5])
+head(google.input.data[,1:4])
 ```
-*If you want to reproduce this example and avoid long downloading times, you can download the data [here] __FIX LINK__*
-<br><br>
+*If you want to reproduce this example and avoid long downloading times, you can download the data [here](https://raw.githubusercontent.com/projectflutrend/pft.2/master/input%20data/google.input.data.de.csv)*
+<br>
 
-## Wikipedia data
+#### Wikipedia data
+[McIver & Brownstein](http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003581) made a strong case for the utility of Wikipedia page view data in influenza prediction models. They showed that "Wikipedia usage accurately estimated the week of peak ILI activity 17% more often than Google Flu Trends data and was often more accurate in its measure of ILI intensity". Combining Google data with Wikipedia may have further advantges. 
 
-[McIver & Brownstein](http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003581) made a string case for the utility of Wikipedia page view data in influenza prediction models. They showed that "Wikipedia usage accurately estimated the week of peak ILI activity 17% more often than Google Flu Trends data and was often more accurate in its measure of ILI intensity". Combining Google data with Wikipedia may have further advantges. 
+We can access Wikipedia page view statistics via it's [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews) (for data from October 2015 until today) and via [Wikishark](http://www.wikishark.com/) (for data from January 2008 until December 2016)
 
-  * On a side note: Finding Wikipedia pages in other languages
-  The (deprecated) package [Wikipediatrend](https://cran.r-project.org/web/packages/wikipediatrend/README.html) offers a convenient way to identify relevant pages in other languages: On Wikipedoa, all pages with similar content are linked with each others across different languages. For 'Influenza', there are more than 80 corresponding pages. While finding the German word for influenza (it's 'influenza'), is not too impressive, finding the right disease names for Wikipedia pages in Arabic and Japanese can be useful. Wikipedia refers to languages in [ISO 639-1 code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
-  
+
 ```{r wiki translate}
-    # The 'Influenza' page in other languges
-    wikipediatrend::wp_linked_pages( page= "Influenza",lang="en")[1:10,2:3]
+# On a side note: On Wikipedoa, pages with similar content are linked with each others across different languages. The [Wikipediatrend package](https://cran.r-project.org/web/packages/wikipediatrend/README.html) offers a convenient way to identify these corresponding pages: For 'Influenza', there are about 80 similar pages. While finding the German word for influenza (it's 'influenza'), is not too impressive, automatically finding Wikipedia disease pages in Arabic and Japanese can be quite useful. Wikipedia refers to languages in [ISO 639-1 code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+  
+# The 'Influenza' page in other languges
+wikipediatrend::wp_linked_pages( page= "Influenza",lang="en")[1:10,2:3]
 ```
 <br>
 
-To download Wikipedia page view data, we have to turn to two sifferent sources of data. Wikipedia has its own [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews), which allows fast and convenient open access. However, the API is only able to retrieve data for > October 2015. Statistics for prior dates are stored in huge files, showing page views per hour in every language. Fortunately, there is a private project, called [wikishark](http://www.wikishark.com/), which we can quickly use to download relevant data per week (There used to be another server with an API: stats.grok.se, but it appears to be down since July 2017). For the two time periods, Wikipedia has used different metrics to count page views and to detmerine individual page visitors. Thus, there might be some discrepancies. It is also important to note that Wikipedia is not static. New pages are created and old pages may be changed or merged, i.e.for some pages that do exist today, we won't find any meaningful page view statistics in 2010 - So, expect (and ignore) some errors when downloading the data.
+To download Wikipedia page view data, we have to turn to two sifferent sources of data. Wikipedia has its own [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews), which allows fast and convenient open access. However, the API is only able to retrieve data for > October 2015. Statistics for prior dates are stored in huge files, showing page views per hour in every language. Fortunately, there is a private project, called [wikishark](http://www.wikishark.com/), which we can quickly use to download relevant data per week (There used to be another server with an API: stats.grok.se, but it appears to be down since July 2017). For the two time periods, Wikipedia has used different metrics to count page views and to detmerine individual page visitors. Thus, there might be some discrepancies. It is also important to note that Wikipedia is not static. New pages are created and old pages may be changed or merged, i.e. for some pages, that do exist today, we won't find any meaningful page view statistics in 2010 - So, expect (and ignore) some errors when downloading the data. For further information about limitations and potential influences on view counts, see the discussion and related pages on [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia:Pageview_statistics). 
 
+First, we download page view statistics for 'influenza'. From this page, we can also extract all the links, which refer to other Wikipedia pages (E.g. there are links to pages about Aspirin, allergy, bronchitis etc.), and we can also get the names of the pages which link to the influenza page (Treatments for influenza link to the influenza page, for example, but most 'backlinks' are more loosely associated). If you like, you can also add Wikipedia pages manually. 
 
-We start with downloading page view statistics for the main influenza page. Then, we extract all links on this page which refer to other wikipedia pages (On the Influenza Wikipedia page there are links to pages baout Aspirin, bronchitis, Allergy etc.). In addition, we can extract statistics for all pages which link to the influenza page (Most mention and link to influenza only en passant). Of you like, you can also add Wikipedia pages manually, if you think people who get flu will look them up (or people who don't have the flu, but visit the infuenza page, will look them up). 
+The functions to identify linked pages and to download the statistics are rather long and messy. We cut it short and recommend just loading the functions from github, without going through the code. If you like, you can view the code [there](https://github.com/projectflutrend/pft.2/blob/master/quickfunctions/pft_ask_wikipedia).
 
-Again, the functions to identify linked pages and to download the statistics are rather long and messy. We cut it short and recommend just loading the functions from github, without going through the code. If you want to have a look at it, click [here](https://github.com/projectflutrend/pft.2/blob/master/quickfunctions/pft_ask_wikipedia).
-
-__*NOTE: FUNCTIONS DO ONLY WORK FOR THE TIME SPAN SET IN THIS EXMAPLE, NEEDS TO BE REVISED*__
-
+__At the moment, functions only work for the given time span__
 ```{r get wiki data}
 # Loading functions from github:
 wiki.functions <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_wikipedia")
 eval(parse(text = wiki.functions))
 
+# Get names of linked pages
 # pft_wiki_lp(term = "Influenza", language_of_interest = "de", backlinked = 1 ,manual.pages=c("Halsschmerzen","Hausmittel"))
 
+# Get page vies statistics
 # pft_ask_wikipedia(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31"))
 
-# Retrive potentially relevant Wikipedia pages
+# Extracting names of potentially relevant Wikipedia pages
+# + Adding 2 terms manually: "Halsschmerzen" (= sore throat) and "Hausmittel" (= home remedy)
 wiki.pages = pft_wiki_lp(term = "Influenza", 
                          language_of_interest = "de", 
                          backlinked = 1,
                          manual.pages=c("Halsschmerzen","Hausmittel"))
 str(wiki.pages)
 
-# We have identified the main influenza page, 149 pages that are links on the influenza page, and 451 pages that link to the influenza page and we have also added 2 pages manually, 601 potentially relevant pages in total.
+# We have identified 1) the influenza page, 
+#                    2) 149 pages that are links on the influenza page 
+#                    3) 451 pages that link to the influenza page 
+#                    4) 2 pages were added manually
+#                           = 603 potentially relevant pages in total.
 
-# Now, we can download their page voew statistics (Depending on the amount of relevant pages, this may take some time: Approximately 2 seconds per page)
-wikipedia.input.data = pft_ask_wikipedia(pages = wiki.pages[1:3],
+# Now, we can download the page view statistics 
+# Depending on the amount of relevant pages, this may take some time: Expect approx. 1.5 seconds per page
+wikipedia.input.data = pft_ask_wikipedia(pages = wiki.pages,
                                          language_of_interest =  "de", 
                                          from = as.Date("2010-01-01"),
                                          to = as.Date("2017-07-31"),
-                                         status = 1)
+                                         status = 0)
+
+cat("Data for",length(wikipedia.input.data) -1, "Wikipedia pages were downloaded. \n")
 head(wikipedia.input.data[,1:4])
 ```
-*If you want to reproduce this example and avoid long downloading times, you can download the data [here] __FIX LINK__ *
-<br><br>
+*If you want to reproduce this example and avoid long downloading times, you can download the data [here](https://raw.githubusercontent.com/projectflutrend/pft.2/master/input%20data/wikipedia.input.data.de.csv)*
+<br>
 
-## Putting the data together and pre-processing
+#### Merging
 
-Now, that we have all the data we wanted, we merge the files into one dataframe, and split it again into predictors and outcome data, as well as training and testing/evaluation data sets.
-
-Preprocessing: Scaling, Centering.
-Also, many predictors are hughly correlated. Especially in the Google Correlate data set (see figure below)
+Now that we have all the data we need, we can merge the files into one dataframe.
 
 ```{r merging predictors}
 # Combining outcome, wikipedia, google trends and google correlate
@@ -330,20 +386,24 @@ df.full = merge(df.full,wikipedia.input.data, by="date")
 
 # Setting date back to a date
 df.full$date = ISOweek2date(paste(df.full$date,"-1",sep="")) # 
-dim(df.full)
-# save(df.full, file="/users/waqr/desktop/df.full.de.2.rdata")
+cat("Full data set:",dim(df.full)[1], "Weeks and",dim(df.full)[2]-2,"Predictors")
 ```
+*This [data set](https://raw.githubusercontent.com/projectflutrend/pft.2/master/input%20data/df.full.de.csv) can also be downloaded*
+<br>
 
-__CHECK DIMS!__
-337 rows (=weeks),548 columns (date,outcome,546 potential predictors)
+****
+
+### Pre-processing
+
+Before the data can be used to build models, we have to split it into training and test data, deal with missing observations, remove predictors with too little variance, transform skewed predictors, think about multi-colinearity and bring all predictors to a common scale.
 <br><br>
 
-## Splitting the data and pre-processing
-
-First, we split the data into outcome/predictors, as well as training/testing data sets. From now on, we try not to leak any kind of information from the test data set to the training data set. 
+#### Splitting the data
+Splitting the data into predictor and outcome, as well as training and testing data sets.
 
 ```{r splitting the data set}
-split = which(df.full$date<split.at)
+# Remeber: 'split.at' defines the date which separates training and test/evaluation data
+split = which(df.full$date<split.at) 
 
 df.train = df.full[split,-c(1,2)] # Predictor training data set
 y.train = df.full[split,c(2)] # Outcome for training data set
@@ -353,169 +413,404 @@ df.test  = df.full[-split,-c(1,2)] # Predictors for testing/evaluation data set
 y.test = df.full[-split,c(2)] # Outcome for testing data set
 date.test = df.full[-split,c(1)] # date for test data set
 ```
-<br><br>
+<br>
 
-Second, we will scale and center all predictors -  Google data comes scaled and centered already, so in this example, we will do this with Wikipedia data. This improves the performance for some of the modelling techniques and it makes it easier to comapre predictors. However, we loose information about how many visits in absolut numbers a Wikipedia page had.
+#### Missing data points
+Furthermore, we remove predictors that have too many (say, >10%) missing values (see figure below). This method will be applied to the test data set, as well- If we wouldn't, we could end up with predictors that have too many missing values in the test data set to give a proper prediction. Then, we would need to re-run the whole model again without the missing test-predictor, anyway. 
 
-Third, we remove predictors that have too many (Say, >10%) missing values (See 'wiki.Geflügel.Aufstallungsverordung' = translatation?!) in figure below). This method we will also apply t the test data set. If we wouldn't, we could end up with test-predictors that have too many, or only missing values. Then, we would need to re-run the whole model again without the missing test-predictor. So, we want to make sure that sufficient cases are available in both, training and test data set. When less than 10% of cases are missing, we are going to impute the missing values by "k-nearest neighbor imputation"[Add a link, description], for the training and test data set separately.
+When less than 10% of cases are missing, we are going to impute the missing values for the training and test data set separately, using an exponatially weighted moving average. 
 
-Fourth, we also want to remove predictors that have near zero variance. This means they have few unique values. Take for example the Wikipedia page on "Samuel Warren Abott": The page was created only in 2015, so in the time before, the page had mostly 0 page views (Only rarely someone tries to access a Wikipedia pages that are non-existent). In addition, this page also has some missing values. Prediction models can be adversely affected by these near zero variance predictors, and they don't really add any value to the models. You could also consider removing predictors that have a very low activity, because results could be unstable if models put weight in them.
-<br><br>
-
-# *NOT RUNNING THE FOLLOWING CODE IN SHORTEND VERSION OF THE CODE*
-
-```{r demo: nearzero and NAs, eval=FALSE, include=FALSE}
-nearzero.sample = nearZeroVar(df.full,freqCut = 95/5 , uniqueCut = 25)[20] # identify near zero-variance
-sum.NA.train.sample = which(as.numeric(lapply(df.full,function(x){sum(is.na(x))})) > length(df.full[,1]) * 0.1 )[10]
-p1 = ggplot(df.full,aes(x=date ,y=df.full[,nearzero.sample])) +
-  geom_line() +
-  ylab("activity") +
-  ggtitle(paste(names(df.full)[nearzero.sample]))
-p2 = ggplot(df.full,aes(x=date ,y=df.full[,sum.NA.train.sample])) +
-  geom_line() +
-  ylab("activity") +
-  ggtitle(paste(names(df.full)[sum.NA.train.sample]))
-grid.arrange(p1, p2,nrow=2)
-
-```
-
-
-```{r pre-processing}
+```{r preprocess NAs}
 # Removing features with >10% NAs
-# in training 
-sum.NA.train = as.numeric(lapply(df.train,function(x){sum(is.na(x))})) 
-sum.NA.train = sum.NA.train > length(df.train[,1]) * 0.1 
-if(sum(sum.NA.train)>0){
-df.train = df.train[-which(sum.NA.train)]
-df.test = df.test[which(colnames(df.test) %in% colnames(df.train))]}
-# and test data separately
-sum.NA.test = as.numeric(lapply(df.test,function(x){sum(is.na(x))}))
-sum.NA.test = sum.NA.test > length(df.test[,1]) * 0.1 
-if(sum(sum.NA.test)>0){
-df.test = df.test[-which(sum.NA.test)]
-df.train = df.train[which(colnames(df.train) %in% colnames(df.test))]}
+  # in training 
+  sum.NA.train = as.numeric(lapply(df.train,function(x){sum(is.na(x))})) 
+  sum.NA.train = sum.NA.train > length(df.train[,1]) * 0.1 
+  if(sum(sum.NA.train)>0){
+  df.train = df.train[-which(sum.NA.train)]
+  df.test = df.test[which(colnames(df.test) %in% colnames(df.train))]}
+  # and test data separately
+  sum.NA.test = as.numeric(lapply(df.test,function(x){sum(is.na(x))}))
+  sum.NA.test = sum.NA.test > length(df.test[,1]) * 0.1 
+  if(sum(sum.NA.test)>0){
+  df.test = df.test[-which(sum.NA.test)]
+  df.train = df.train[which(colnames(df.train) %in% colnames(df.test))]}
+  
+# Imputing remaining NAs
+  df.train = na.ma(df.train , k = 3, weighting = "exponential") 
+  df.test = na.ma(df.test , k = 3, weighting = "exponential") 
+```
+<br>
+
+#### Low variance predictors
+Furthermore, we want to remove predictors that have near zero variance. This means they have few unique values. Take for example the Wikipedia page on "Samuel Warren Abott": The page was created only in 2015, so in the time before, the page had mostly 0 page views (Only rarely someone tries to access a Wikipedia pages that are non-existent). Prediction models can be adversely affected by these near zero variance predictors. You might also consider removing predictors that have a very low activity, because results could be very unstable if models put much weight on them (a random increase in interest could distort our model).
+
+```{r preprocess nearzerovar}
+# Example: near zero variance 
+nearzero.sample = nearZeroVar(df.train,freqCut = 95/5 , uniqueCut = 33)[11] 
+ggplot(df.train,aes(x=date.train ,y=df.train[,nearzero.sample])) +
+  geom_line() +
+  ylab("activity") +
+  ggtitle(paste("Near zero variance: ",names(df.train)[nearzero.sample]))
 
 # Removing features with near zero variance
-# identify near zero-variance predictors [only in df.train!]
-nearZeroVar = nearZeroVar(df.train,freqCut = 95/5 , uniqueCut = 25) 
-if(sum(nearZeroVar)>0){
-df.train = df.train[,-nearZeroVar] 
-df.test = df.test[which(colnames(df.test) %in% colnames(df.train))]}
-
-
-# Scaling, centering, and imputing remaining NAs
-preprocess.df.train = preProcess(df.train, method=c("scale","center","knnImpute")) # why knnimpute error?!
-
-df.train = predict(preprocess.df.train, newdata = df.train)
-df.test = predict(preprocess.df.train,newdata = df.test)
+  # identify near zero-variance predictors [only in df.train!]
+  nearZeroVar = nearZeroVar(df.train,freqCut = 95/5 , uniqueCut = 25) 
+  if(sum(nearZeroVar)>0){
+  df.train = df.train[,-nearZeroVar] 
+  df.test = df.test[which(colnames(df.test) %in% colnames(df.train))]}
 ```
+*It is not clear what is going on with the article apout 'Gebr._Klingenberg' (a German company). Between 2010 and the end of 2015, it was visited only during four weeks (2,1,1,2 page views). Thus, it shows very little variance with regard to the total time span. After October 2015, with the introduction of the new pageview API, we see a drastical change and much more variation. It is not clear what caused this strange behaviour*
+<br>
 
-# *NOT RUNNING THE FOLLOWING CODE IN SHORTEND VERSION OF THE CODE*
+#### Center - Scaling - Skewness reduction
+Predictors should be [scaled](https://en.wikipedia.org/wiki/Standard_score) (each value of a predictor is divided by its standard deviation) and [centred]() (All predictor have a mean of zero). This can improve the performance of some of the modelling techniques and makes it easier to compare predictors' influence. Be aware, though, that the information, about how many absolute visits a Wikipedia page had, will be lost and that can also be more difficult to interpret the results.
 
-*We can also consider principal component analysis, assome methods might work better when we reduce multi-colinerity. Especially Google Correlate data is highly correlated -> We can plot an example with just 10 predictors, but google correlate gives us 100 of these kind!*
-```{r corrplot demo, eval=FALSE, include=FALSE}
-# Assessing multicolinerity
-library(corrplot)
-# Selecting a subset and plotting the correlation matrix
-subset.g.cor = g.cor.input[,2:11] 
-names(subset.g.cor) = gsub("g.cor.","",names(subset.g.cor))
-correlation.matrix = cor(subset.g.cor)  
-corrplot(correlation.matrix,method="pie", title="Correlation between Google Correlate features",tl.pos="lt",tl.cex=0.7, tl.col ="black", tl.srt=45)
-```
-
-# EXAMPLE: Model building (lasso + cubist)
-
-  * _bla bla bla explanation_
-  * _list of models we will use_
-  * _criteria how to select one_
-
-
-### Paralelel computing
+Furthermore, many of our predictors are heavily right-skewed. In order to improve the performance of some of our modelling techniques, we will use caret's ['BoxCox'](https://en.wikipedia.org/wiki/Power_transform#Box.E2.80.93Cox_transformation) function which automatically determines the appropriate transformation to make the data 'more normal'. 
 
 ```{r}
-# paralel computing
+# Scaling, centering, transofrmation and imputation of remaining NAs by K-nearest neighbours
+  preprocess.df.train = preProcess(df.train, method=c("scale","center","BoxCox"))
+  df.train = predict(preprocess.df.train, newdata = df.train)
+  df.test = predict(preprocess.df.train,newdata = df.test)
+```
+<br>
+
+#### Mutli-colinarity 
+Many of our predictors are strongly correlated with each other - especially the Google Correlate predictor set (see figure below). To takle this issue, you might consider removing some of the predictors, or use [principal component analysis](Link) (PCA), to reduce the number of predictors by creating a smaller set of uncorrelated components. However, PCA is unsupervised, i.e. it is not guided by the outcome variable when reducing dimensions (in contrast to PLS, see below). Since we did not observe any improvment by using PCA with the present data set, we won't cover it here.  
+
+```{r corrplot demo, eval=FALSE, include=FALSE}
+# Example: Assessing multicolinerity
+# Selecting a subset and plotting the correlation matrix
+subset.g.cor = google.input.data[,6:16] 
+names(subset.g.cor) = gsub("g.cor.","",names(subset.g.cor))
+correlation.matrix = cor(subset.g.cor)  
+corrplot::corrplot(correlation.matrix,method="pie", title="Correlation between Google Correlate features",tl.pos="lt",tl.cex=0.7, tl.col ="black", tl.srt=45)
+```
+*Most predictors in the Google Correlate Predictor Set are correlated with each other. "Grippe Verlauf" and "Influenza Inkubationszeit" show a correlation of r=.85 for example, and the mean correlation is around r=.8 over the selected 11 predictors* 
+<br>
+```
+# If you want to use PCA to tackle this issue in R:
+ PCA.proces = preProcess(df.raw, method=c("pca"),  # principal component analysis
+                          thresh=0.95)             # a cutoff for the cumulative percent of variance                                                    # to be retained by PCA
+
+ df.pca = predict(PCA.proces, newdata = df.raw)
+```
+<br>
+
+****
+
+### Model building
+
+#### Overview 
+We will run several types of models:
+
+|  Models                   |   Resources              |
+|---------------------------|--------------------------|
+|   partial least squares  |                          |
+|   ridge regression        | |
+|   lasso regression |[Tibshirani](http://statweb.stanford.edu/~tibs/lasso/lasso.pdf) for a technical or this [website and video](https://www.r-bloggers.com/trevor-hastie-presents-glmnet-lasso-and-elastic-net-regularization-in-r/) for a more practical explanation |
+|   multivariate adaptive regression splines  | |
+|   support vector machine| |
+|   single trees  | |
+|   boosted trees  | |
+|   bagged trees  | |
+|   random forest  | |
+|   Cubist  |  |
+|   Neural Network  | |
+  
+Models will be judged by the accuracy of their predictions root-mean-squared-error (rmse), within the cross-validation set. We will evaluate the performance of the model(s) with the lowest rmse within the test data set.
+<br><br>
+
+#### Time series cross validation
+Usual split-sample cross validation is problematic in time series data. A random split of the data, as well as splitting the data based on season-year, would leak information from the future to the past. This is a critical issue in predictors that loose or gain predictive power over time. Consider the following simple example: When we train a model with data from 2010 and 2012 and validate it with data from 2011, information about the predictive power of the keyword 'influenza 2010' (which is very high in 2010 but low in 2011) is leaked from 2012 (where it is also low) to 2010. 
+
+Therefore, one should use time series cross validation. This means, we will train a model using the data from the first data point until week x and validate the results using data from the next k-weeks. In each validation round, we will move k weeks forward, while the origin stays the same. The amount of data the model is being trained on increases with every round (A model is trained using data from 2010-W30 to 2011-W30 and validated with data from 2011-W31 and W32, in the next round, the model is trained from 2010-W30 to 2011-W32 and validated with data from 2011-W33 and W34, and so on). You could also consider using a moving origin (i.e. the amount of training data stays the same), if you think online behaviour from six years ago is not relevant any more and models should only be based on data from the last two seasons, for example. Small k's provide more accurate rmse results, but it also increases computational time. In this example we chose a k of 13.
+  
+```{r}
+# Setting rolling forward cv with fixed origin
+controlObject <- trainControl(method = "timeslice",
+                              initialWindow = 52,  # First model is trained on 52 weeks (x)
+                              horizon = 52,        # Validation weeks (k)
+                              fixedWindow = FALSE, # Origin stays the same
+                              allowParallel = TRUE)# Paralel computing can speed things up
+```
+<br>
+
+#### Parallel computing
+Parallel computing can shorten the time it takes to run these computationally intensive models signficantly.
+
+```{r, message=FALSE, warning=FALSE}
+# parallel computing
 no_cores <- detectCores() - 1  
 cl <- makeCluster(no_cores, type="FORK")
 registerDoParallel(cl)  
 ```
+<br><br>
 
-### Cross validation, rolling forward
+#### Modelling
+__I have only run a few of models, yet. Takes so much time...__
+__Note: Save models on github...__
 
-  * explain what cv is
-  * explain why split-cv doesn't work
-  * explain what rolling forward cv is
-  * Talk about an appropriate horizon
-    * ideal: cv and 1-week forward rolling evaluation plot!?
-  * whats a grid?
+```{r, warning=FALSE, eval=FALSE}
+start.time = Sys.time()
 
+# partial least square
+  M.pls = train(y= y.train ,
+              x = df.train,
+              method = "pls",
+              tuneLength = 20,
+              trControl = controlObject)
 
-```{r}
-# control object for cross validation: rolling forward cv with fixed origin
-controlObject <- trainControl(method = "timeslice",
-                              initialWindow = 52,
-                              horizon = 52, # 1-52 # Smaller horizon better
-                              fixedWindow = FALSE,
-                              allowParallel = TRUE)
+# ridge regression (enet)  
+  # ridge grid
+  ridgeGrid <- expand.grid(.lambda = c(0, .001, .01, .1),.fraction = seq(0.05, 1, length = 10))  
+  # model
+  M.ridge  = train(y= y.train ,
+                 x = df.train,
+                 method = "enet",
+                 tuneGrid = ridgeGrid,
+                 trControl = controlObject)
 
-# setting grids
-glmnGrid <- expand.grid(.alpha = c(0, .1, .2, .4, .6, .8, 1),.lambda = seq(.01, 1, length = 40))
-cubistGrid <- expand.grid(.committees = c(1, 5, 10, 50, 75, 100),.neighbors=c(0,1,3,5,7,9))
+# lasso regression (glmnet)
+  # lasso grid
+  lassoGrid <- expand.grid(.alpha = c(0,.2, .4, .6, .8, 1),.lambda = seq(.01, 2, length = 20))
+  # Model
+  M.lasso <- train(y= y.train ,
+                     x = df.train,
+                     method = "glmnet",
+                    family = "poisson", # gaussian?!
+                    tuneGrid = lassoGrid,
+                    trControl = controlObject)
+
+# multivariate adaptive regression splines (earth)
+  # mars grid
+  marsGrid <- expand.grid(.degree = 1, .nprune = 2:25)
+  # Model
+  M.mars=train(y= y.train ,
+          x = df.train,
+          method = "earth",
+          tuneGrid = marsGrid,
+          trControl = controlObject)
+  
+    # varImp(M.mars)
+
+# radial support vector machine (svmRadial)
+  # rsvm grid
+  rsvmGrid <-  expand.grid(sigma= 2^c(-25, -20, -15,-10, -5, 0), C= 2^c(0:4))
+  # Model
+  M.rsvm = train(y= y.train ,
+              x = df.train,
+              method = "svmRadial",
+              tuneLength = 25,
+              tuneGrid =rsvmGrid, 
+              trControl = controlObject)
+
+# Single regression trees 1 (rpart)
+  M.rpart = train(y= y.train ,
+                x = df.train,
+                method = "rpart",
+                tuneLength = 20,
+                trControl = controlObject)
+  
+# Single regression trees 2 (cpart)
+  M.ctree = train(y= y.train ,
+                x = df.train,
+                method = "ctree",
+                tuneLength = 20,
+                trControl = controlObject)
+
+# Bagged trees (treeBag)
+  M.bagtree = train(y= y.train ,
+                      x = df.train,
+                      method = "treebag",
+                      trControl = controlObject)
+  
+# Random forest (rf)
+  M.rf = train(y= y.train , ### takes too long!!!
+              x = df.train,
+              method = "rf",
+              tuneLength = 10,
+              ntrees = 500,
+              importance = TRUE,
+              trControl = controlObject)
+  
+# Boosted tree (gbm)
+  # boostree grid
+  boostGrid = expand.grid(.interaction.depth = seq(1, 7, by = 2), .n.trees = seq(100, 1000, by = 50),.shrinkage = c(0.01, 0.1),.n.minobsinnode = c(10))
+  # Model
+  M.boost = train(y= y.train ,
+                  x = df.train,
+                  method = "gbm",
+                  tuneGrid = boostGrid,
+                  verbose = FALSE,
+                  trControl = controlObject)
+  
+# Cubist (cubist)
+  # cubist grid
+  cubistGrid <- expand.grid(.committees = c(1, 25, 50, 75, 100,125,150,175,200),.neighbors=c(0,1,5,9))
+  # Model
+  M.cubist = train(y= y.train ,
+                   x = df.train,
+                   method = "cubist",
+                   tuneGrid = cubistGrid,
+                   trControl = controlObject)
+  
+# neural network (avNNet)
+  # nnet grid
+  nnetGrid <- expand.grid(.decay = c(0.001, .01, .1),.size = seq(1, 27, by = 2),.bag = FALSE)
+  # model
+  M.nnet = train(y= y.train ,
+                x = df.train,
+                method = "avNNet",
+                tuneGrid = nnetGrid,
+                preProcess = "pca", # nnet are often affected by multicolinearity
+                linout = TRUE,
+                trace = FALSE,
+                maxit = 500,
+                trControl = controlObject)
+  
+  finished.time = Sys.time() - start.time
+  cat(finished.time)
 ```
 
-### Model Specifications
+```{r evaluation}
+models.de = list(result.list = list(M.pls = M.pls,
+                                    M.ridge = M.ridge,
+                                    M.lasso = M.lasso,
+                                    M.mars = M.mars,
+                                    M.rsvm = M.rsvm,
+                                    M.rpart = M.rpart,
+                                    M.ctree = M.ctree,
+                                    M.bagtree = M.bagtree,
+                                    M.rf = M.rf,
+                                    M.boost = M.boost,
+                                    M.cubist = M.cubist,
+                                    M.nnet = M.nnet)
+                 , eval.list = list())
 
-```{r}
-# formula list 
-formula.list = list(glmnet.mod = list(y= y.train ,
-                                      x = df.train,
-                                      method = "glmnet",
-                                      family = "gaussian",
-                                      tuneGrid = glmnGrid,
-                                      trControl = controlObject),
-                    cbModel = list(y= y.train ,
-                                   x = df.train,
-                                   method = "cubist",
-                                   tuneGrid = cubistGrid,
-                                   trControl = controlObject))
-```
-
-### 
-
-```{r}
-# A function to evaluate the models
 eval.function <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_eval_model")
 eval(parse(text = eval.function))
 
-
-# A loop to build and evalute the model
-models.de = list(result.list = list(), eval.list = list())
-for(i in 1:length(formula.list)){
-  cat("Building a model:",formula.list[[i]]$method,"\n")
-  tryCatch({ 
-    models.de$result.list[[i]] = do.call("train",formula.list[[i]])
-    names(models.de$result.list)[i] = names(formula.list)[i]
-    
-    models.de$eval.list[[i]] = pft_eval_model(models.de$result.list[[i]])
-    names(models.de$eval.list)[i] = names(formula.list)[i]
-    
-    cat(formula.list[[i]]$method,"evaluation done! \n")},
-    error=function(e) {cat("error in",formula.list[[i]]$method,"\n")})
+for(i in 1:length(models.de$result.list)){
+  tryCatch({
+  models.de$eval.list[[i]] = pft_eval_model(models.de$result.list[[i]])
+    names(models.de$eval.list)[i] = names(models.de$result.list)[i]},
+  error = function(e){cat(names(models.de$result.list)[i] ,": Error \n")})
 }
 ```
+<br><br>
 
-Evaluate the models
+****
+
+### Results
+
+#### Comparing model results
 
 ```{r}
-#### evaluation plots
-models.de$eval.list[[1]]$plots$pred.plot
+t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
+for(s in 1:length(models.de$result.list)){
+  tryCatch({
+    if(!is.null(models.de$result.list[[s]])){
+      stat$rsme[[t]] = models.de$result.list[[s]]$results$RMSE
+      names(stat$rsme)[t] = names(models.de$result.list)[s]
+      
+      stat$res[[t]] = models.de$result.list[[s]]
+      names(stat$res)[t] = names(models.de$result.list)[s]
+      t = t +1}
+  },
+  error = function(e){cat(t ,": Error \n")})
+}
+# rmse box-plot, showing cv results?!
+tick = 1; rmse.means = list(value=NA,model=NA)
+for(i in 1:length(stat$rsme)){
+  for(l in 1:length(stat$rsme[[i]])){
+    rmse.means$value[tick] = stat$rsme[[i]][l]
+    rmse.means$model[tick] = names(stat$rsme)[i]
+    tick = tick +1
+  }}
+rmse.means = data.frame(rmse.means)
+rmse.boxplot = 
+  ggplot(data=rmse.means ,aes(x=reorder(model, -as.numeric(value) ),y=value)) +
+  geom_boxplot(fill="lightblue") +
+  coord_flip() +
+  xlab("model") +
+  ylab("rmse") +
+  theme(axis.text.y = element_text(colour="grey20",size=20)) 
 
-models.de$eval.list[[2]]$plots$pred.plot
-
-
-
+rmse.boxplot +
+  ylim(1,3.5)
 ```
 
 
+#### Evaluating the models individually
+
+How you should read the figure below:
+
+Each row represents one type of model. On the left side, you see the results from the model tuning/cross validation. The rmse refers to the mean error within the validation set. The tuning parameters with the lowest rmse are selected for the final model. On the right side, you see the comparison between predicted and observerd values, of the final model, within the complete training data set and the test data set. We expect to see a lower error within the training data set (right plot, orange), than in the test data set (right plot, red) or the validation set (left side). Furthermore, the mean rmse within the validation sets should be comparable to the rmse within the test data set. The most important 
+
+```{r, fig.width=7,fig.height=21}
+
+grid.arrange(plot(models.de$result.list[[1]] ),
+             models.de$eval.list[[1]]$plots$pred.plot,
+             plot(models.de$result.list[[2]] ),
+             models.de$eval.list[[2]]$plots$pred.plot,
+             plot(models.de$result.list[[3]] ),
+             models.de$eval.list[[3]]$plots$pred.plot,
+             plot(models.de$result.list[[4]] ),
+             models.de$eval.list[[4]]$plots$pred.plot,
+             plot(models.de$result.list[[5]] ),
+             models.de$eval.list[[5]]$plots$pred.plot,
+             plot(models.de$result.list[[6]] ),
+             models.de$eval.list[[6]]$plots$pred.plot,
+             plot(models.de$result.list[[7]] ),
+             models.de$eval.list[[7]]$plots$pred.plot,
+            # 8 is missing!!!
+             
+             plot(models.de$result.list[[9]] ),
+             models.de$eval.list[[9]]$plots$pred.plot,
+             plot(models.de$result.list[[10]] ),
+             models.de$eval.list[[10]]$plots$pred.plot,
+             plot(models.de$result.list[[11]] ),
+             models.de$eval.list[[11]]$plots$pred.plot,
+             plot(models.de$result.list[[12]] ),
+             models.de$eval.list[[12]]$plots$pred.plot,
+             widths=2:3, ncol=2)
+
+```
+
+```
+NOT INCLUDED, YET:
+
+                         plot(models.de$result.list[[4]] ),
+                         models.de$eval.list[[4]]$plots$pred.plot,
+                         plot(models.de$result.list[[5]] ),
+                         models.de$eval.list[[5]]$plots$pred.plot,
+                         plot(models.de$result.list[[6]] ),
+                         models.de$eval.list[[6]]$plots$pred.plot,
+                         plot(models.de$result.list[[7]] ),
+                         models.de$eval.list[[7]]$plots$pred.plot,
+```
+
+#### Model selection
+
+#### Nowcast model versu Forecast model
+
+#### Influenza-Nowcasting
+
+****
+
+### Discussion 
+
+Change point analysis
+
+more data sources: twitter, etc etc
+
+transfer the approach to other settings and see what the results are. To the best of our knowledge, digital epidemiology has not been tried in most countries around the world. Results might differ considerably, depending on the degree of digitalization, information seeking behaviour, the sources of information, etc etc. 
+
+reporting
 
 
 
+Text
+
+...render("input.Rmd", html_document(code_download=TRUE))
