@@ -17,7 +17,6 @@ header-includes:
 <b> <font size=5> How to build a real-time prediction model for influenza in Germany</font> </b>  
 
 __Paul Schneider__, *Maastricht University, Netherlands Institute of Health Service Research*  
-__David Barnett__, *Maastricht University*  
 __John Paget__, *Netherlands Institute of Health Service Research*  
 __Peter Spreeuwenberg__, *Netherlands Institute of Health Service Research*  
 __Christel van Gool__, *Maastricht University*  
@@ -25,22 +24,22 @@ __Christel van Gool__, *Maastricht University*
 __Contact: schneider.paulpeter@gmail.com __
 
 ****
+
 ### Summary
 This is a fully reproducable R-tutorial on how to build a (near) real-time prediction model for influenza in Germany, based on search query data from Google Trends and page view statistics from Wikipedia. All code and data is openly available. Instructions include guidance on how to identify and download relevant data, format and pre-process the retrieved information, and build and evaluate prediction models, using multiple statistical modelling techniques (a.k.a. machine learning). In addition, we will provide a short introduction to the emerging field of 'Digital Epidemiology' and discuss some of its critical methodological issues.
 
 __TL;DR: [Code only version](ADD LINK)__
 
 Methods are inspired by the [caret](https://cran.r-project.org/web/packages/caret/caret.pdf) R-package and the book [Applied Predictive Modelling](http://appliedpredictivemodeling.com/), both by Max Kuhn.
+<br><br>
 
-<br>
-
-<br>
 ****
 
 ### Introduction
 
 #### Digital Epidemiology
 In the past, people could only went to see their doctor when they were sick and wanted to get information, guidance and treatment. Many national disease surveillance systems are therefore based on doctors as sentinels: health care providers and medical laboratories are being asked to report the number of cases for a certain disease to the surveillance organization. In Germany, for example, laboratories are required to report any proof of influenza viruses to the local health authority, which in turn reports it to the Robert Koch Institute. Nowadays, however, many people first turn to the internet. They seek health information by googling for their sysmptoms, look up diseases or treatments on Wikipedia or connect with others through social media. For Epidemiologists, this offers the opportunity to track these digital traces of people. This has been described as ['Digital Epidemilogy'](http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1002616): "Digital data sources, when harnessed appropriately, can provide local and timely information about disease and health dynamics in populations around the world". 
+<br>
 
 #### __Milestones of digital epidemiology__
 
@@ -50,13 +49,15 @@ In the past, people could only went to see their doctor when they were sick and 
   * Health Map
   * Influenza mao netherlands
 
+<br>
+
 #### Why Influenza? 
 In principle, the methods of surveillance, we use in this example, can be applied to any disease. However, some of the features of influenza make it easier to detect relevant predictors and monitor its activity. First, influenza has a strong seasonality (in most countries). Every year there is a start and an end, and during the summer months there are literally no cases of influenza. This strong annual pattern can be detected easily. In diseases, in which the incidence is more stable, there might be not enough variation to distinguish signal and noise. Second, during the flu season, between 5% and 20% of the population get sick. The online traces of rare diseases (say, achalasia) probably get lost in noise. And finally, influenza has distinct symptoms that most people will recognize as flu-symptoms, this means the symptoms are (somewhat) specific to influenza. In contrast, diseases with only subtle or very non-specific symptoms (say, fatigue) are certainly more problematic to track. 
 
 Nevertheless, there is no reason to assume that other diseases can not be surveyed using similar methods. A few papers have already shown promising results in ...Ebola, TUberculosis... [ADD LINK][LINK]. We would indeed be very interested to see how predictive models perform in further diseases, like allergic rhinitis, depression or even sunburns. If you have good data on this or know where to get it, we invite you to follow this tutorial, build your own model(s) and share your results with us and the public.
+<br>
 
-
-#### __Issues__
+#### Methodological issues
 
 The huge amount of available data and the novelity of methods are a challenge.  
 Overly optimistic because of 
@@ -69,38 +70,36 @@ Overly optimistic because of
   * Research area mostly in the US (cite global paper), unclear whether methods are reproducible in countries in which digitalization is not that advanced.
 
 Research within digital epi must adhere to the rigour and caution other epidemiological project are also held accountable to.
-<br>
+<br><br>
 
 ****
-
-<br>
 
 ### Tutorial
 
 #### Overview 
 We will build a model for predicting the influenza incidence (lab-confirmed cases) in Germany in near real-time ('Nowcasting'), by using data from various sources. We will start with getting information on influenza incidence in Germany, since the availability of the outcome data determines the scope and time horizon of the model we build. We then download data on search queries and page view statistics from Google Correlate, Google Trends and Wikipedia, respectively. The data have to be formatted, merged and pre-processed, before entering into the model. Subsequently, we will use various so called machine learning methods to select relevant predictors and build prediction models. Finally, we will compare the different models in terms of predictive accuracy and select the best model to predict this week's influenza activity.
 
-*We would like to point out that when we speak of 'predictions', we use the term in its [statistical sense](https://en.wikipedia.org/wiki/Prediction#Statistics). We do not mean ’forecasting, as in forecasting future influenza cases. We are doing 'Nowcasting': We observe what people were doing on the internet until today and infer from this information how many influenza cases there are about now*
-<br>
+*We would like to point out that when we speak of 'predictions', we use the term in its [statistical sense](https://en.wikipedia.org/wiki/Prediction#Statistics). We do not mean ’forecasting, as in forecasting future influenza cases. We are 'Nowcasting': We observe what people were doing on the internet until today and infer from this information how many influenza cases there are about now.*
+
+<br><br>
 
 #### Data sources
 Outome data is taken from the [Robert Koch Institute](https://survstat.rki.de/Content/Query/Select.aspx), predictor data from [Google Correlate](https://www.google.com/trends/correlate/), [Google Trends](https://trends.google.com/trends/) and Wikipedia via it's [API](https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews) and [Wikishark](http://www.wikishark.com/). All analyses are performed using the statistical software [R/R Studio](https://www.rstudio.com/), and plenty of its packages, particularly the [caret](https://cran.r-project.org/web/packages/caret/caret.pdf) package. Everything we use is  available online for free. The data used in this example is also available on github. If you want to build your own model, you have to have a Google account to upload outcome data to Google Correlate. 
-<br>
+<br><br>
 
 #### Transferability
 If you want to transfer this approach to another setting (another country or another disease), the only thing you need is a set of outcome data, i.e. good-quality data of the actual weekly incidence of the disease, over a sufficient time span (1 year +), in a specific country. The rest should work (more or less) automatically, unless you wish to add more data sources as predictors, which may require some more editing. Depending on the country in which you want to predict disease activity, the availability and quality of Google and Wikipedia data may differ substantially. For Wikipedia data, page view statistics can only be distinguished by language, but not by country. Language can be a good proxy in some cases (e.g. Japanese, Korean, Italian, etc.), but a pretty bad one in others (e.g. French, English, Spanish). You can look up how much of a [country's Wikipedia traffic is in a specfific language](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerCountryBreakdown.htm), and how much [Wikipedia traffic within a specific language is from a specfific country](https://stats.wikimedia.org/wikimedia/squids/SquidReportPageViewsPerLanguageBreakdown.htm). Moreover, with weekly data, you should be aware that there are [divergent opinions](http://chartsbin.com/view/41671) about what is the best starting day for a week (Saturday? Sunday? Monday?).
+<br><br>
 
 ****
-
-<br>
 
 #### Getting started
 Before building the model, we need to install and load the required R-packages (yes, there are a lot)...
 
-```{r Installing and loading packages, results='hide', message=FALSE, warning=FALSE}
+```{r Installing and loading packages, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # Install and load all required packages
 # This may take a while...
-required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","cowplot","corrplot","doParallel","glmnet", "Cubist","pls","devtools","plotmo","plotrix","TeachingDemos","earth","kernlab","rpart","party","grid","zoo","mvtnorm","modeltools","stats4","strucchange","sandwich","elasticnet","lars","randomForest","ipred","e1071") # 
+required_packages<-c("knitr","RCurl","ISOweek","jsonlite","ggplot2","prophet","dplyr","gtrendsR","wikipediatrend","pageviews","caret","imputeTS","gridExtra","cowplot","corrplot","doParallel","glmnet", "Cubist","pls","devtools","plotmo","plotrix","TeachingDemos","earth","kernlab","rpart","party","grid","zoo","mvtnorm","modeltools","stats4","strucchange","sandwich","elasticnet","lars","randomForest","ipred","e1071","repmis","nnet","gbm","survial","plyr") # 
 
 pft_packages <- function(package){
     for(i in 1:length(package)){
@@ -117,7 +116,7 @@ pft_packages(required_packages)
 <br>
 
 ...and we should specify a few key parameters:
-```{r}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 # What is the outcome of interest?  
 term = "Influenza" #  laboratory-confirmed cases    
 
@@ -184,8 +183,8 @@ The figure shows the influenza seasons 2010/2011 to 2016/2017, in Germany. More 
 
 |                                    |                                 | 
 |------------------------------------|---------------------------------|
-|As a comparison: pattern of influenza-like illness in Germany, as reported by the [Robert Koch Institute](https://influenza.rki.de/Saisonberichte/2015.pdf). Influenza-like illness is probably more appropriate as an outcome for nowcasting models, as it is a better reflection of the incidence of influenza-like symptoms. However, for Germany, this data is not publicly available.  |![](https://github.com/projectflutrend/pft.2/raw/master/pics/ili%20germany.png)    |
-<br>
+|As a comparison: pattern of __*influenza-like illness*__ in Germany, as reported by the [Robert Koch Institute](https://influenza.rki.de/Saisonberichte/2015.pdf). Influenza-like illness is probably more appropriate as an outcome for nowcasting models, as it is a better reflection of the incidence of influenza-like symptoms. However, for Germany, this data is not publicly available.  |![](https://github.com/projectflutrend/pft.2/raw/master/pics/ili%20germany.png)    |
+<br><br>
 
 
 #### The 'null-model'
@@ -212,7 +211,7 @@ p
 ```
 
 The prophet-forecast algorithm tries to find a pattern in the available data (2010/2011-2015/2016) and extrapolates it into the future (2016/2017).  We can see that the 2016/2017 influenza season was unusually strong, compared to the last six seasons. The forecast model would have underpredicted the number of cases. Furthermore, the season started ealier than usual. So, the forecast model predicted the onset, peak and end of the season a few weeks earlier than they occured. Later, we can use this forecast and compare it to what our Nowcast-model predicts. There are probaly better models to forecast influenza, but it is still better than nothing.
-<br>
+<br><br>
 
 #### Google Correlate
 [Google Correlate](https://www.google.com/trends/correlate/) is a tool that can identify search queries that are highly correlated with any time series data you upload (Even for [randomly generated numbers](https://www.r-bloggers.com/google-correlate-certainly-does-not-imply-causation/) it will find a good match). It was a building block of [Google Flu Trend](https://googleblog.blogspot.co.uk/2011/05/mining-patterns-in-search-data-with.html). In addition, you can also identify queries that are correlated with another query: For example, find queries that are related to "Influenza" queries. See this [paper](https://www.google.com/trends/correlate/nnsearch.pdf) for more info on how Google Correlate and Trends works, and this [guide](http://people.ischool.berkeley.edu/~hal/Papers/2015/primer.pdf) on how to use it.
@@ -258,13 +257,13 @@ g.cor.keywords[1:20] # Showing the first 20 keywords
 #### Google trends
 [Google Trends](https://trends.google.com/trends/) is "a public web facility of Google Inc., based on Google Search, that shows how often a particular search-term is entered relative to the total search-volume across various regions of the world, and in various languages" - (from [Wikipedia](https://en.wikipedia.org/wiki/Google_Trends)). It can also be used to identify related search queries ("People who searched for this, also searched for this" - notice the difference between Google Trends and Correlate!)
 
-First, we are going to download the data for the 100 keywords we have identified using Google Correlate. Second, while Google Correlate will most often provide you with good predictors, there might be  additional value in taking into account predictors from Google Trends as well, even if only to control for confounding or media-generated over-prediction. Thus, we will download search query statistics for 'influenza', and for 15 related queries. Third, we retrive data for 'influenza'-queries in Google News. If you like, you can expand your requests and increase the numbers of predictors by also retrieving related keywords from related keyword, feed related keywords into Google Correlate, add more News-queries etc.
+First, we are going to download the data for the 100 keywords we have identified using Google Correlate. Second, while Google Correlate will most often provide you with good predictors, there might be  additional value in taking into account predictors from Google Trends as well, even if only to control for confounding or media-generated over-prediction. Thus, we will download search query statistics for 'influenza', and for 25 related queries. Third, we retrive data for 'influenza'-queries in Google News. If you like, you can expand your requests and increase the numbers of predictors by also retrieving related keywords from related keyword, feed related keywords into Google Correlate, add more News-queries etc.
 
 __Cave__: Google Correlate only gives you weekly data for time spans < 5 years. As a possible work-around, we split our time series into smaller chunks and download them separately. But because of the way the data is generated, overlapping time series do not match 100%, even after adjusting the scale. Also, it is not clear whether results will be reproducible, as Google might show slightly different figures in new queries.
 <br>
 
 ```{r Find related google queries, message=TRUE, warning=TRUE}
-# Identifying 15 related search queries
+# Identifying 25 related search queries
   # We have already set these parameters: 
   # term = "influenza"; country_of_interest="DE"; from="2010-07-31"; to="2017-07-31"; status= 1
   google_primer = gtrends(keyword=term,
@@ -277,7 +276,7 @@ __Cave__: Google Correlate only gives you weekly data for time spans < 5 years. 
   print(g.trends.keywords)
 ``` 
 
-The loops to download the search queries are messy and rather long. We will just load them from github, where you can have a closer [look at them](https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_google), if you want. 
+The loops to download the search queries are rather messy. We will just load them from github, where you can have a closer [look at them](https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_ask_google), if you want. 
 
 __At the moment, functions only work for the given time span__
 ```{r gtrends download, message=TRUE, warning=FALSE}
@@ -478,7 +477,7 @@ Furthermore, many of our predictors are heavily right-skewed. In order to improv
 #### Mutli-colinarity 
 Many of our predictors are strongly correlated with each other - especially the Google Correlate predictor set (see figure below). To takle this issue, you might consider removing some of the predictors, or use [principal component analysis](Link) (PCA), to reduce the number of predictors by creating a smaller set of uncorrelated components. However, PCA is unsupervised, i.e. it is not guided by the outcome variable when reducing dimensions (in contrast to PLS, see below). Since we did not observe any improvment by using PCA with the present data set, we won't cover it here.  
 
-```{r corrplot demo, eval=FALSE, include=FALSE}
+```{r corrplot demo}
 # Example: Assessing multicolinerity
 # Selecting a subset and plotting the correlation matrix
 subset.g.cor = google.input.data[,6:16] 
@@ -504,19 +503,20 @@ corrplot::corrplot(correlation.matrix,method="pie", title="Correlation between G
 #### Overview 
 We will run several types of models:
 
-|  Models                   |   Resources              |
-|---------------------------|--------------------------|
-|   partial least squares  |                          |
-|   ridge regression        | |
-|   lasso regression |[Tibshirani](http://statweb.stanford.edu/~tibs/lasso/lasso.pdf) for a technical or this [website and video](https://www.r-bloggers.com/trevor-hastie-presents-glmnet-lasso-and-elastic-net-regularization-in-r/) for a more practical explanation |
-|   multivariate adaptive regression splines  | |
-|   support vector machine| |
-|   single trees  | |
-|   boosted trees  | |
-|   bagged trees  | |
-|   random forest  | |
-|   Cubist  |  |
-|   Neural Network  | |
+|           |   Model: R-function      |
+|-----------|--------------------------|
+|  1 |  [Partial least squares: pls](https://en.wikipedia.org/wiki/Partial_least_squares_regression) |
+| 2 | [Ridge regression: enet](https://en.wikipedia.org/wiki/Tikhonov_regularization)  | 
+|  3 |  [Lasso regression: glmnet]((https://en.wikipedia.org/wiki/Lasso_(statistics)))  |
+|  4 | [Multivariate adaptive regression splines: earth](https://en.wikipedia.org/wiki/Multivariate_adaptive_regression_splines) |
+| 5 | [Support vector machine: svmradial](https://en.wikipedia.org/wiki/Support_vector_machine) |
+| 6 | [Single trees: rpart](https://en.wikipedia.org/wiki/Recursive_partitioning) |
+| 7 | [Single trees: ctree](https://en.wikipedia.org/wiki/Decision_tree_learning) |
+| 8 | [Boosted trees: gbm](https://en.wikipedia.org/wiki/Gradient_boosting#Gradient_tree_boosting) |
+| 9 | [Bagged trees: treebag](https://en.wikipedia.org/wiki/Bootstrap_aggregating) |
+| 10 | [Random forest: rf](https://en.wikipedia.org/wiki/Random_forest) |
+| 11 | [Cubist: cubist](https://cran.r-project.org/web/packages/Cubist/vignettes/cubist.pdf) |
+| 12 | [Neural Network: AvNNet](https://en.wikipedia.org/wiki/Artificial_neural_network) |
   
 Models will be judged by the accuracy of their predictions root-mean-squared-error (rmse), within the cross-validation set. We will evaluate the performance of the model(s) with the lowest rmse within the test data set.
 <br><br>
@@ -524,17 +524,20 @@ Models will be judged by the accuracy of their predictions root-mean-squared-err
 #### Time series cross validation
 Usual split-sample cross validation is problematic in time series data. A random split of the data, as well as splitting the data based on season-year, would leak information from the future to the past. This is a critical issue in predictors that loose or gain predictive power over time. Consider the following simple example: When we train a model with data from 2010 and 2012 and validate it with data from 2011, information about the predictive power of the keyword 'influenza 2010' (which is very high in 2010 but low in 2011) is leaked from 2012 (where it is also low) to 2010. 
 
-Therefore, one should use time series cross validation. This means, we will train a model using the data from the first data point until week x and validate the results using data from the next k-weeks. In each validation round, we will move k weeks forward, while the origin stays the same. The amount of data the model is being trained on increases with every round (A model is trained using data from 2010-W30 to 2011-W30 and validated with data from 2011-W31 and W32, in the next round, the model is trained from 2010-W30 to 2011-W32 and validated with data from 2011-W33 and W34, and so on). You could also consider using a moving origin (i.e. the amount of training data stays the same), if you think online behaviour from six years ago is not relevant any more and models should only be based on data from the last two seasons, for example. Small k's provide more accurate rmse results, but it also increases computational time. In this example we chose a k of 13.
+Therefore, one should use time series cross validation. This means, we will train a model using the data from the first data point until week x and validate the results using data from the next k-weeks. In each validation round, we will move 1 week forward, while the origin stays the same. The amount of data the model is being trained on increases with every round (A model is trained using data from 2010-W30 to 2011-W30 and validated with data from 2011-W31 and 2012-W30, in the next round, the model is trained from 2010-W30 to 2011-W31 and validated with data from 2011-W32 and W31, and so on). You could also consider using a moving origin (i.e. the amount of training data stays the same), if you think online behaviour from six years ago is not relevant any more and models should only be based on data from the last two seasons, for example. k basically represents the time period in which the model is being updated - If k = 52, a model would remain the same for a whole year without being updated with actual incidence data. We chose a k of 4, meaning a model will be evaluated using 4 weeks of forward rolling test data.
   
+  
+  __MISUNDERSTOOD HORIZON, NEED TO RUN ALL MODELS AGAIN...!!! ARGHS!__
 ```{r}
 # Setting rolling forward cv with fixed origin
 controlObject <- trainControl(method = "timeslice",
                               initialWindow = 52,  # First model is trained on 52 weeks (x)
-                              horizon = 52,        # Validation weeks (k)
+                              horizon = 52, #4?!   # Validation weeks (k)
+                              skip = 0,            # Skip weeks to decrease CV-folds
                               fixedWindow = FALSE, # Origin stays the same
                               allowParallel = TRUE)# Paralel computing can speed things up
 ```
-<br>
+<br><br>
 
 #### Parallel computing
 Parallel computing can shorten the time it takes to run these computationally intensive models signficantly.
@@ -548,22 +551,20 @@ registerDoParallel(cl)
 <br><br>
 
 #### Modelling
-__I have only run a few of models, yet. Takes so much time...__
-__Note: Save models on github...__
+
+__Cave:__ Running the code below can take several hours! 
 
 ```{r, warning=FALSE, eval=FALSE}
-start.time = Sys.time()
-
 # partial least square
   M.pls = train(y= y.train ,
               x = df.train,
               method = "pls",
-              tuneLength = 20,
+              tuneLength = 10,
               trControl = controlObject)
 
 # ridge regression (enet)  
   # ridge grid
-  ridgeGrid <- expand.grid(.lambda = c(0, .001, .01, .1),.fraction = seq(0.05, 1, length = 10))  
+  ridgeGrid <- expand.grid(.lambda = c(.001, .01, .1),.fraction = seq(0.005, 0.3, length = 30))  
   # model
   M.ridge  = train(y= y.train ,
                  x = df.train,
@@ -573,18 +574,18 @@ start.time = Sys.time()
 
 # lasso regression (glmnet)
   # lasso grid
-  lassoGrid <- expand.grid(.alpha = c(0,.2, .4, .6, .8, 1),.lambda = seq(.01, 2, length = 20))
+  lassoGrid <- expand.grid(.alpha = c(.2, .4, .6, .8),.lambda = seq(.05, 1.5, length = 50)) # refined grid
   # Model
   M.lasso <- train(y= y.train ,
                      x = df.train,
                      method = "glmnet",
-                    family = "poisson", # gaussian?!
+                    family = "gaussian", # tried poisson, worse!
                     tuneGrid = lassoGrid,
                     trControl = controlObject)
 
 # multivariate adaptive regression splines (earth)
   # mars grid
-  marsGrid <- expand.grid(.degree = 1, .nprune = 2:25)
+  marsGrid <- expand.grid(.degree = 1, .nprune = 2:15)
   # Model
   M.mars=train(y= y.train ,
           x = df.train,
@@ -596,7 +597,7 @@ start.time = Sys.time()
 
 # radial support vector machine (svmRadial)
   # rsvm grid
-  rsvmGrid <-  expand.grid(sigma= 2^c(-25, -20, -15,-10, -5, 0), C= 2^c(0:4))
+  rsvmGrid <-  expand.grid(sigma= 2^c(-25: -2), C= 2^c(4:6))
   # Model
   M.rsvm = train(y= y.train ,
               x = df.train,
@@ -609,14 +610,14 @@ start.time = Sys.time()
   M.rpart = train(y= y.train ,
                 x = df.train,
                 method = "rpart",
-                tuneLength = 20,
+                tuneLength = 30,
                 trControl = controlObject)
   
 # Single regression trees 2 (cpart)
   M.ctree = train(y= y.train ,
                 x = df.train,
                 method = "ctree",
-                tuneLength = 20,
+                tuneLength = 30,
                 trControl = controlObject)
 
 # Bagged trees (treeBag)
@@ -636,7 +637,7 @@ start.time = Sys.time()
   
 # Boosted tree (gbm)
   # boostree grid
-  boostGrid = expand.grid(.interaction.depth = seq(1, 7, by = 2), .n.trees = seq(100, 1000, by = 50),.shrinkage = c(0.01, 0.1),.n.minobsinnode = c(10))
+  boostGrid = expand.grid(.interaction.depth = seq(3, 9, by = 2), .n.trees = seq(100, 2000, by = 100),.shrinkage = c(0.01, 0.1),.n.minobsinnode = c(10))
   # Model
   M.boost = train(y= y.train ,
                   x = df.train,
@@ -647,7 +648,7 @@ start.time = Sys.time()
   
 # Cubist (cubist)
   # cubist grid
-  cubistGrid <- expand.grid(.committees = c(1, 25, 50, 75, 100,125,150,175,200),.neighbors=c(0,1,5,9))
+  cubistGrid <- expand.grid(.committees = seq(0,100,by=10),.neighbors=c(0,1,5,9))
   # Model
   M.cubist = train(y= y.train ,
                    x = df.train,
@@ -657,7 +658,7 @@ start.time = Sys.time()
   
 # neural network (avNNet)
   # nnet grid
-  nnetGrid <- expand.grid(.decay = c(0.001, .01, .1),.size = seq(1, 27, by = 2),.bag = FALSE)
+  nnetGrid <- expand.grid(.decay = c(.01,.05, .1),.size = seq(1, 10, by = 1),.bag = FALSE)
   # model
   M.nnet = train(y= y.train ,
                 x = df.train,
@@ -669,19 +670,8 @@ start.time = Sys.time()
                 maxit = 500,
                 trControl = controlObject)
   
-  finished.time = Sys.time() - start.time
-  cat(finished.time)
-```
-
-```{r saving}
-# saving results
-for(i in 1:length(models.de$result.list)){
-temp.model = models.de$result.list[i]
-  save(temp.model,file=paste("/users/waqr/documents/pft.2/models/",names(models.de$result.list)[i],".de.tutorial.rdata",sep=""))
-  }
-```
-
-```{r evaluation}
+  
+## Saving results
 models.de = list(result.list = list(M.pls = M.pls,
                                     M.ridge = M.ridge,
                                     M.lasso = M.lasso,
@@ -695,7 +685,40 @@ models.de = list(result.list = list(M.pls = M.pls,
                                     M.cubist = M.cubist,
                                     M.nnet = M.nnet)
                  , eval.list = list())
+  
+```
 
+```{r saving models, eval=FALSE, include=FALSE}
+#save(models.de,file=paste("/users/waqr/documents/pft.2/models/models.de.tut#orial.rdata")
+# saving results
+for(i in 1:length(models.de$result.list)){
+temp.model = models.de$result.list[i]
+  save(temp.model,file=paste("/users/waqr/documents/pft.2/models/",names(models.de$result.list)[i],".de.tutorial.rdata",sep=""))}
+```
+<br><br>
+
+****
+
+### Results
+
+We have stored the results of the previous analyses on github:
+
+```{r load models from github, message=FALSE, warning=FALSE}
+# models.de = list(result.list=list(),eval.list = list())
+model.list = c("M.pls","M.ridge","M.lasso","M.mars","M.rsvm","M.rpart","M.ctree","M.bagtree","M.rf","M.boost","M.cubist","M.nnet")
+for(m in 1:length(model.list)){
+# type 'N' 
+url = paste("https://github.com/projectflutrend/pft.2/blob/master/models/",model.list[m],".de.tutorial.rdata?raw=true",sep="")
+source_data(url,rdata=TRUE)
+models.de$result.list[[m]] = temp.model[[1]]
+names(models.de$result.list)[m]= names(temp.model)
+}
+```
+
+
+
+```{r, message=FALSE, warning=FALSE}
+# read eval function from github
 eval.function <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/pft_eval_model")
 eval(parse(text = eval.function))
 
@@ -708,106 +731,118 @@ for(i in 1:length(models.de$result.list)){
 ```
 <br><br>
 
-****
 
-### Results
 
-#### Comparing model results
+#### Comparing model results - 
+
+##### CV RMSE results over all tuning paramters
 
 ```{r}
-t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
-for(s in 1:length(models.de$result.list)){
-  tryCatch({
-    if(!is.null(models.de$result.list[[s]])){
-      stat$rsme[[t]] = models.de$result.list[[s]]$results$RMSE
-      names(stat$rsme)[t] = names(models.de$result.list)[s]
-      
-      stat$res[[t]] = models.de$result.list[[s]]
-      names(stat$res)[t] = names(models.de$result.list)[s]
-      t = t +1}
-  },
-  error = function(e){cat(t ,": Error \n")})
-}
-# rmse box-plot, showing cv results?!
-tick = 1; rmse.means = list(value=NA,model=NA)
-for(i in 1:length(stat$rsme)){
-  for(l in 1:length(stat$rsme[[i]])){
-    rmse.means$value[tick] = stat$rsme[[i]][l]
-    rmse.means$model[tick] = names(stat$rsme)[i]
-    tick = tick +1
-  }}
-rmse.means = data.frame(rmse.means)
-rmse.boxplot = 
-  ggplot(data=rmse.means ,aes(x=reorder(model, -as.numeric(value) ),y=value)) +
-  geom_boxplot(fill="lightblue") +
-  coord_flip() +
-  xlab("model") +
-  ylab("rmse") +
-  theme(axis.text.y = element_text(colour="grey20",size=20)) 
+# Illustration of CV RMSE over all tuning parameters
+rmse.plots.function <- getURL("https://raw.githubusercontent.com/projectflutrend/pft.2/master/quickfunctions/rmse.boxplots")
+eval(parse(text = rmse.boxplots.function))
 
-rmse.boxplot +
+rmse.plots(models.de$result.list,box=1) +
   ylim(1,3.5)
-```
 
+rmse.plots(models.de$result.list,box=0,parallel = 1) 
+```
+*"Each line represents the results for a common CV holdout set"*
+<br>
+
+
+
+__Showing lowest CV RMSE results per model__
+
+```{r  lowest CV RMSE per model}
+# lowest CV RMSE per model
+rmse.means = rmse.plots(models.de$result.list,box=0,mins=1)
+mins = by(rmse.means$value,rmse.means$model,function(x){min(x,na.rm=T)})
+plot(1:length(mins),mins[order(mins)],type="h",col=1:12,ylab="CV RMSE",xlab="model",main="Best CV RMSE result",ylim=c(0,3),xlim=c(0,13))
+text(1:length(mins),mins[order(mins)],paste(names(mins[order(mins)]),"=",round(mins[order(mins)],3)), cex=0.6, pos=3,col=1:12,srt=45)
+
+```
+<br>
 
 #### Evaluating the models individually
+
+We can also evaluate each model individually, to see....
 
 How you should read the figure below:
 
 Each row represents one type of model. On the left side, you see the results from the model tuning/cross validation. The rmse refers to the mean error within the validation set. The tuning parameters with the lowest rmse are selected for the final model. On the right side, you see the comparison between predicted and observerd values, of the final model, within the complete training data set and the test data set. We expect to see a lower error within the training data set (right plot, orange), than in the test data set (right plot, red) or the validation set (left side). Furthermore, the mean rmse within the validation sets should be comparable to the rmse within the test data set. The most important 
 
-```{r, fig.width=7,fig.height=21}
+```{r plotting individual model results, fig.width=7,fig.height=21}
 
-grid.arrange(plot(models.de$result.list[[1]] ),
+grid.arrange(plot(models.de$result.list[[1]],
+                  main=paste("CV RMSE =",round(models.de$eval.list[[1]]$lowest.rmse,4))),
              models.de$eval.list[[1]]$plots$pred.plot,
-             plot(models.de$result.list[[2]] ),
+             plot(models.de$result.list[[2]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[2]]$lowest.rmse,4))),
              models.de$eval.list[[2]]$plots$pred.plot,
-             plot(models.de$result.list[[3]] ),
+             plot(models.de$result.list[[3]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[3]]$lowest.rmse,4))),
              models.de$eval.list[[3]]$plots$pred.plot,
-             plot(models.de$result.list[[4]] ),
+             plot(models.de$result.list[[4]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[4]]$lowest.rmse,4))),
              models.de$eval.list[[4]]$plots$pred.plot,
-             plot(models.de$result.list[[5]] ),
+             plot(models.de$result.list[[5]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[5]]$lowest.rmse,4))),
              models.de$eval.list[[5]]$plots$pred.plot,
-             plot(models.de$result.list[[6]] ),
+             plot(models.de$result.list[[6]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[6]]$lowest.rmse,4))),
              models.de$eval.list[[6]]$plots$pred.plot,
-             plot(models.de$result.list[[7]] ),
+             plot(models.de$result.list[[7]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[7]]$lowest.rmse,4))),
              models.de$eval.list[[7]]$plots$pred.plot,
-            # 8 is missing!!!
-             
-             plot(models.de$result.list[[9]] ),
+             ggplot() + ggtitle(
+                 label= paste("CV RMSE =",round(models.de$eval.list[[8]]$lowest.rmse,4))),
+             models.de$eval.list[[8]]$plots$pred.plot,
+             plot(models.de$result.list[[9]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[9]]$lowest.rmse,4))),
              models.de$eval.list[[9]]$plots$pred.plot,
-             plot(models.de$result.list[[10]] ),
+             plot(models.de$result.list[[10]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[10]]$lowest.rmse,4))),
              models.de$eval.list[[10]]$plots$pred.plot,
-             plot(models.de$result.list[[11]] ),
+             plot(models.de$result.list[[11]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[11]]$lowest.rmse,4))),
              models.de$eval.list[[11]]$plots$pred.plot,
-             plot(models.de$result.list[[12]] ),
+             plot(models.de$result.list[[12]] ,
+                  main=paste("CV RMSE =",round(models.de$eval.list[[12]]$lowest.rmse,4))),
              models.de$eval.list[[12]]$plots$pred.plot,
+             top="Comparing Models",
              widths=2:3, ncol=2)
 
 ```
 
-```
-NOT INCLUDED, YET:
-
-                         plot(models.de$result.list[[4]] ),
-                         models.de$eval.list[[4]]$plots$pred.plot,
-                         plot(models.de$result.list[[5]] ),
-                         models.de$eval.list[[5]]$plots$pred.plot,
-                         plot(models.de$result.list[[6]] ),
-                         models.de$eval.list[[6]]$plots$pred.plot,
-                         plot(models.de$result.list[[7]] ),
-                         models.de$eval.list[[7]]$plots$pred.plot,
-```
+****
+<br>
 
 #### Model selection
+The top models don't differ much.
+
+All models underpredicted the incidence withn the test data, which was unusually high. ...
+
+We select model X.
+<br><br>
 
 #### Nowcast model versu Forecast model
 
+Back to our null-model: Did the prediction model performed better than the forecast?
+
+
+
 #### Influenza-Nowcasting
+Now, we are going to 'Nowcast' the current influenza incidence in Germany.
+1. Download recent data.
+2. Nowcast
+3. explain
 
 ****
 
 ### Discussion 
+
+selection bias
 
 Change point analysis
 
