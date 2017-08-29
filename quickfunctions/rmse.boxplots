@@ -1,44 +1,42 @@
-rmse.plots = function(model.list, box = 1, parallel = 0,rmse.means=0){
-
-t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
-for(s in 1:length(model.list)){
-  tryCatch({
-    if(!is.null(model.list[[s]])){
-      stat$rsme[[t]] = model.list[[s]]$results$RMSE
-      names(stat$rsme)[t] = names(model.list)[s]
-      
-      stat$res[[t]] = model.list[[s]]
-      names(stat$res)[t] = names(model.list)[s]
-      t = t +1}
-  },
-  error = function(e){cat(t ,": Error \n")})
-}
-# rmse box-plot, showing cv results?!
-tick = 1; rmse.means = list(value=NA,model=NA)
-for(i in 1:length(stat$rsme)){
-  for(l in 1:length(stat$rsme[[i]])){
-    rmse.means$value[tick] = stat$rsme[[i]][l]
-    rmse.means$model[tick] = names(stat$rsme)[i]
-    tick = tick +1
-  }}
-rmse.means = data.frame(rmse.means)
-rmse.boxplot = 
-  ggplot(data=rmse.means ,aes(x=reorder(model, -as.numeric(value) ),y=value)) +
-  geom_boxplot(fill="lightblue") +
-  coord_flip() +
-  xlab("model") +
-  ylab("rmse") +
-  theme(axis.text.y = element_text(colour="grey20",size=20)) 
+rmse.plots = function(model.list, box = 1, parallel = 0,mins=0){
+  
+  t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
+  for(s in 1:length(model.list)){
+    tryCatch({
+      if(!is.null(model.list[[s]])){
+        stat$rsme[[t]] = model.list[[s]]$results$RMSE
+        names(stat$rsme)[t] = names(model.list)[s]
+        
+        stat$res[[t]] = model.list[[s]]
+        names(stat$res)[t] = names(model.list)[s]
+        t = t +1}
+    },
+    error = function(e){cat(t ,": Error \n")})
+  }
+  # rmse box-plot, showing cv results?!
+  tick = 1; rmse.means = list(value=NA,model=NA)
+  for(i in 1:length(stat$rsme)){
+    for(l in 1:length(stat$rsme[[i]])){
+      rmse.means$value[tick] = stat$rsme[[i]][l]
+      rmse.means$model[tick] = names(stat$rsme)[i]
+      tick = tick +1
+    }}
+  rmse.means = data.frame(rmse.means)
+  rmse.boxplot = 
+    ggplot(data=rmse.means ,aes(x=reorder(model, -as.numeric(value) ),y=value)) +
+    geom_boxplot(fill="lightblue") +
+    coord_flip() +
+    xlab("model") +
+    ylab("rmse") +
+    theme(axis.text.y = element_text(colour="grey20",size=20)) 
   
   parallelplot = parallelplot(resamples( stat$res))
-
   
-if(box==1){
-return(rmse.boxplot)}
-if(parallel ==1){
-return(parallelplot)}
-if(rmse.means==1){
-return(rmse.means)}
+  
+  if(box==1){
+    return(rmse.boxplot)}
+  if(parallel ==1){
+    return(parallelplot)}
+  if(mins==1){
+    return(rmse.means)}
 }
-
-
