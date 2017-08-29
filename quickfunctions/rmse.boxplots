@@ -1,4 +1,4 @@
-rmse.plots = function(model.list, box = 1, parallel = 0){
+rmse.plots = function(model.list, box = 1, parallel = 0,rmse.means=0){
 
 t = 1; stat = list(rsme=list(),Rsquared=list(),res=list())
 for(s in 1:length(model.list)){
@@ -36,8 +36,9 @@ rmse.boxplot =
 if(box==1){
 return(rmse.boxplot)}
 if(parallel ==1){
-return(parallelplot)
-}
+return(parallelplot)}
+if(rmse.means==1){
+return(rmse.means)}
 }
 
 
