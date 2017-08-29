@@ -8,9 +8,10 @@ pft_eval_model = function(model){
  lowest.rmse = NULL
  
 
+  
   tryCatch({ 
-  if(model$bestTune$parameter !="none"){
-    cv.plot = plot(model)}
+    if(!is.null(model$bestTune$parameter)){
+      cv.plot = plot(model)}
     error=function(e) {}})
   
   if(!is.null(model)){
