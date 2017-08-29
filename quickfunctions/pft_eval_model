@@ -1,6 +1,18 @@
 pft_eval_model = function(model){ 
+  
+  cv.plot = NULL
+  pred.plot = NULL
+  cor.train = NULL
+  cor.test = NULL
+  cv.Rsquared = NULL
+  lowest.rmse = NULL
+  
+  
+  
   tryCatch({ 
-    cv.plot = plot(model)
+    if(!exists("parameter",where=model$bestTune)){
+    if(!is.null(model$bestTune$parameter)){
+      cv.plot = plot(model)}}
     error=function(e) {}})
   
   if(!is.null(model)){
@@ -34,12 +46,14 @@ pft_eval_model = function(model){
     cor.train =  cor(y.train,pred.train.temp)
     cor.test  = cor(y.test,pred.test.temp)
     cv.Rsquared = model$results$Rsquared
+    lowest.rmse =  min(model$results$RMSE,na.rm=T)
   },error = function(e){cat(": Error \n")})
   
   out = list(plots=list("cv.plot"=cv.plot,
                         "pred.plot" =pred.plot),
              correlations = list("cor.train" = cor.train,
                                  "cor.test" = cor.test,
-                                 "cv.Rsquared" = cv.Rsquared))
+                                 "cv.Rsquared" = cv.Rsquared),
+             "lowest.rmse" = lowest.rmse)
   return(out)
 }
