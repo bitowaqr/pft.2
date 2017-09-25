@@ -36,7 +36,7 @@ pft_eval_model = function(model){
         geom_point(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red")  +
         geom_line(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red") +
         annotate("text", x=median(date.test)  , y=max(y.test), label= paste("test rmse:",rmse.test ), size=7,col="red") +
-        ggtitle(paste(name.of.model)) +
+        ggtitle(paste(model.name.for.title)) +
         ylab("y - actual vs. predicted") +
         xlab("Date - Training and Test period") +
         theme_light()
