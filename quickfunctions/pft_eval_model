@@ -11,9 +11,10 @@ pft_eval_model = function(model){
   
   tryCatch({ 
     if(!exists("parameter",where=model$bestTune)){
-      if(!is.null(model$bestTune$parameter)){
-        cv.plot = plot(model)}}
-    error=function(e) {}})
+      
+        cv.plot = plot(model)}
+     },
+    error=function(e) {})
   
   if(!is.null(model)){
     tryCatch({
