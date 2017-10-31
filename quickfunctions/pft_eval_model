@@ -11,9 +11,10 @@ pft_eval_model = function(model){
   
   tryCatch({ 
     if(!exists("parameter",where=model$bestTune)){
-    if(!is.null(model$bestTune$parameter)){
-      cv.plot = plot(model)}}
-    error=function(e) {}})
+      
+        cv.plot = plot(model)}
+     },
+    error=function(e) {})
   
   if(!is.null(model)){
     tryCatch({
@@ -25,6 +26,8 @@ pft_eval_model = function(model){
       train.temp.df  = data.frame(y=y.train,date=date.train,preds=pred.train.temp)
       test.temp.df = data.frame(y=y.test,date=date.test,preds=pred.test.temp)
       
+      model.name.for.title = ifelse(exists("name.of.model"),name.of.model,model$method)
+      
       pred.plot = ggplot(data=train.temp.df) +
         geom_line(data=test.temp.df, aes(x=date.test,y=y.test),col="gray") +
         geom_line(data=train.temp.df,aes(x=date.train ,y=y.train),col="black") +
@@ -34,7 +37,7 @@ pft_eval_model = function(model){
         geom_point(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red")  +
         geom_line(data=test.temp.df,aes(x=date.test,y=pred.test.temp),col="red") +
         annotate("text", x=median(date.test)  , y=max(y.test), label= paste("test rmse:",rmse.test ), size=7,col="red") +
-        ggtitle(paste(model$method)) +
+        ggtitle(paste(model.name.for.title)) +
         ylab("y - actual vs. predicted") +
         xlab("Date - Training and Test period") +
         theme_light()
