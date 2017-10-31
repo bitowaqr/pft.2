@@ -604,9 +604,20 @@ wikipedia.input.data$date = ISOweek(ISOweek2date(paste(wikipedia.input.data$date
 <p>Now that we have all the data we need, we can merge the files into one data frame.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY2F0KFwiRnVsbCBkYXRhIHNldDpcIixkaW0oZGYuZnVsbClbMV0sIFwiV2Vla3MgYW5kXCIsZGltKGRmLmZ1bGwpWzJdLTIsXCJQcmVkaWN0b3JzXCIpXG5cbmBgYCJ9 -->
-<pre class="r"><code>cat(&quot;Full data set:&quot;,dim(df.full)[1], &quot;Weeks and&quot;,dim(df.full)[2]-2,&quot;Predictors&quot;)
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBmdWxsIGRhdGEgc2V0IGF2YWlsYWJsZSBhdFxuIyBodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vcHJvamVjdGZsdXRyZW5kL3BmdC4yL21hc3Rlci9pbnB1dCUyMGRhdGEvZGYuZnVsbC5kZS5jc3ZcbiNcbiMgQ29tYmluaW5nIG91dGNvbWUsIHdpa2lwZWRpYSwgZ29vZ2xlIHRyZW5kcyBhbmQgZ29vZ2xlIGNvcnJlbGF0ZVxuaW5mbHVlbnphLmRlJGRhdGUgPSBJU093ZWVrKGluZmx1ZW56YS5kZSRkYXRlICkgXG4jXG4jIE1lcmdpbmcgYnkgd2VlayAoYXZvaWRpbmcgYW55IE1vbmRheS9TdW5kYXkgb3Igb3RoZXIgZGF5IGlzc3VlcylcbmRmLmZ1bGwgPSBtZXJnZShpbmZsdWVuemEuZGUsZ29vZ2xlLmlucHV0LmRhdGEsIGJ5PVwiZGF0ZVwiKVxuZGYuZnVsbCA9IG1lcmdlKGRmLmZ1bGwsd2lraXBlZGlhLmlucHV0LmRhdGEsIGJ5PVwiZGF0ZVwiKVxuI1xuIyBTZXR0aW5nIGRhdGUgYmFjayB0byBhIGRhdGVcbmRmLmZ1bGwkZGF0ZSA9IElTT3dlZWsyZGF0ZShwYXN0ZShkZi5mdWxsJGRhdGUsXCItMVwiLHNlcD1cIlwiKSkgIyBcbmNhdChcIkZ1bGwgZGF0YSBzZXQ6XCIsZGltKGRmLmZ1bGwpWzFdLCBcIldlZWtzIGFuZFwiLGRpbShkZi5mdWxsKVsyXS0yLFwiUHJlZGljdG9yc1wiKVxuYGBgIn0= -->
+<pre class="r"><code># full data set available at
+# https://raw.githubusercontent.com/projectflutrend/pft.2/master/input%20data/df.full.de.csv
+#
+# Combining outcome, wikipedia, google trends and google correlate
+influenza.de$date = ISOweek(influenza.de$date ) 
+#
+# Merging by week (avoiding any Monday/Sunday or other day issues)
+df.full = merge(influenza.de,google.input.data, by=&quot;date&quot;)
+df.full = merge(df.full,wikipedia.input.data, by=&quot;date&quot;)
+#
+# Setting date back to a date
+df.full$date = ISOweek2date(paste(df.full$date,&quot;-1&quot;,sep=&quot;&quot;)) # 
+cat(&quot;Full data set:&quot;,dim(df.full)[1], &quot;Weeks and&quot;,dim(df.full)[2]-2,&quot;Predictors&quot;)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiRnVsbCBkYXRhIHNldDogMzQ2IFdlZWtzIGFuZCA1MzUgUHJlZGljdG9yc1xuIn0= -->
 <pre><code>Full data set: 346 Weeks and 535 Predictors</code></pre>
