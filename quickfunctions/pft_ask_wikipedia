@@ -42,10 +42,12 @@ pft_wiki_lp = function(term = "Influenza", language_of_interest = "de", backlink
   return(wiki.pages)
 }
 pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", from = as.Date("2010-01-01"),to = as.Date("2017-07-31"),status=1){
+  
   require(ISOweek)
   require(pageviews)
   require(RCurl)
   require(jsonlite)
+  
   from.wikishark = format(from,format="%m/%d/%Y")
   to.wikishark = format(as.Date("2015-09-30"),format="%m/%d/%Y")
   from.wikiapi = as.Date("2015-10-01") 
@@ -54,25 +56,38 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
   wiki = data.frame(date=seq(from=as.Date(from),to=as.Date(to),by=1))
   for(p in 1:length(pages)){
     tryCatch({
-      if(status==1){cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")}
-      temp.dat<-article_pageviews(article = pages[p],
-                                  project = paste(language_of_interest,".wikipedia",sep=""),
-                                  start = "2015100100",end = pageview_timestamps(to))
-      temp.wiki.pageview = data.frame(as.Date(temp.dat$date),(temp.dat$views)) 
-      names(temp.wiki.pageview) = c("date",pages[p])
       
-      url.lookup = paste("www.wikishark.com/title/",language_of_interest,"/",pages[p],sep="")
-      raw.url.lookup = getURLContent(url.lookup)
-      start.at =regexpr("translate/id/",raw.url.lookup)[1]
-      stop.at = regexpr("values=",raw.url.lookup)[1]
-      page.id =  substr(raw.url.lookup,start.at+nchar("translate/id/"),stop.at-2)
-     # function below not working: wiki shark doesnt use Wikipedia pageid- they make up their own 'values'  
-     # page.id=fromJSON(getURL(paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=info&titles=",pages[p],"&format=json",sep="")))$query$pages[[1]]$pageid
-      ws.url = paste("http://www.wikishark.com/json_print.php?values=",page.id,"&datefrom=",from.wikishark,"&dateto=",to.wikishark,"&view=2&normalized=0&scale=0&peak=0&log=0&zerofix=0&sumall=0&format=csv", sep="")
-      ws.csv = read.csv(ws.url)[,1:2]
-      temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),(as.numeric(ws.csv[,2])))
-      names(temp.ws.pageview) = c("date",pages[p])
-      temp.wiki.pageview = rbind(temp.wiki.pageview,temp.ws.pageview)
+      if(status==1){
+          cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")
+        }
+      
+      if(to >= as.Date("2015-01-01")){
+        temp.dat<-article_pageviews(article = pages[p],
+                                    project = paste(language_of_interest,".wikipedia",sep=""),
+                                    start = "2015100100",end = pageview_timestamps(to))
+        temp.wiki.pageview = data.frame(as.Date(temp.dat$date),(temp.dat$views)) 
+        names(temp.wiki.pageview) = c("date",pages[p])
+      }
+      
+      if(from < as.Date("2015-01-01")){
+        url.lookup = paste("www.wikishark.com/title/",language_of_interest,"/",pages[p],sep="")
+        raw.url.lookup = getURLContent(url.lookup)
+        start.at =regexpr("translate/id/",raw.url.lookup)[1]
+        stop.at = regexpr("values=",raw.url.lookup)[1]
+        page.id =  substr(raw.url.lookup,start.at+nchar("translate/id/"),stop.at-2)
+        # function below not working: wiki shark doesnt use Wikipedia pageid- they make up their own 'values'  
+        # page.id=fromJSON(getURL(paste("https://",language_of_interest,".wikipedia.org/w/api.php?action=query&prop=info&titles=",pages[p],"&format=json",sep="")))$query$pages[[1]]$pageid
+        ws.url = paste("http://www.wikishark.com/json_print.php?values=",page.id,"&datefrom=",from.wikishark,"&dateto=",to.wikishark,"&view=2&normalized=0&scale=0&peak=0&log=0&zerofix=0&sumall=0&format=csv", sep="")
+        ws.csv = read.csv(ws.url)[,1:2]
+        temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),(as.numeric(ws.csv[,2])))
+        names(temp.ws.pageview) = c("date",pages[p])
+        if(to >= as.Date("2015-01-01")){
+         temp.wiki.pageview = rbind(temp.wiki.pageview,temp.ws.pageview)
+        } else {
+          temp.wiki.pageview = temp.ws.pageview
+        }
+        
+      }
       
       wiki = merge(wiki,temp.wiki.pageview,by="date",all=T)
     },
@@ -83,3 +98,4 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
   
   return(wiki)
 }
+
