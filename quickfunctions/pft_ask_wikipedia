@@ -50,7 +50,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
   
   from.wikishark = format(from,format="%m/%d/%Y")
   to.wikishark = format(as.Date("2015-09-30"),format="%m/%d/%Y")
-  from.wikiapi = as.Date("2015-10-01") 
+  from.wikiapi = as.Date("2015-08-01") 
   to.wikiapi = to
   
   wiki = data.frame(date=seq(from=as.Date(from),to=as.Date(to),by=1))
@@ -61,15 +61,15 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
           cat("Downloading data for page",p,"of",length(pages)," - ",(p/length(pages))*100 ,"% \n")
         }
       
-      if(to >= as.Date("2015-01-01")){
+      if(to >= as.Date("2015-08-01")){
         temp.dat<-article_pageviews(article = pages[p],
                                     project = paste(language_of_interest,".wikipedia",sep=""),
-                                    start = "2015100100",end = pageview_timestamps(to))
+                                    start = "2015080100",end = pageview_timestamps(to))
         temp.wiki.pageview = data.frame(as.Date(temp.dat$date),(temp.dat$views)) 
         names(temp.wiki.pageview) = c("date",pages[p])
       }
       
-      if(from < as.Date("2015-01-01")){
+      if(from < as.Date("2015-08-01")){
         url.lookup = paste("www.wikishark.com/title/",language_of_interest,"/",pages[p],sep="")
         raw.url.lookup = getURLContent(url.lookup)
         start.at =regexpr("translate/id/",raw.url.lookup)[1]
@@ -81,7 +81,7 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
         ws.csv = read.csv(ws.url)[,1:2]
         temp.ws.pageview = data.frame(as.Date( ws.csv[,1] ,format="%m/%d/%Y"),(as.numeric(ws.csv[,2])))
         names(temp.ws.pageview) = c("date",pages[p])
-        if(to >= as.Date("2015-01-01")){
+        if(to >= as.Date("2015-08-01")){
          temp.wiki.pageview = rbind(temp.wiki.pageview,temp.ws.pageview)
         } else {
           temp.wiki.pageview = temp.ws.pageview
@@ -98,4 +98,3 @@ pft_ask_wikipedia = function(pages = wiki.pages,language_of_interest =  "de", fr
   
   return(wiki)
 }
-
